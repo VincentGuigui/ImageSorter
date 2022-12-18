@@ -754,7 +754,7 @@ namespace ImageRenamer
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(220, 901);
+            this.tabPage2.Size = new System.Drawing.Size(220, 581);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Date";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -781,24 +781,24 @@ namespace ImageRenamer
             // 
             // txtDateSetterStep
             // 
-            this.txtDateSetterStep.Location = new System.Drawing.Point(37, 434);
+            this.txtDateSetterStep.Location = new System.Drawing.Point(37, 446);
             this.txtDateSetterStep.Name = "txtDateSetterStep";
-            this.txtDateSetterStep.Size = new System.Drawing.Size(169, 20);
+            this.txtDateSetterStep.Size = new System.Drawing.Size(173, 20);
             this.txtDateSetterStep.TabIndex = 31;
             this.txtDateSetterStep.Text = "d or d.hh:mm[:ss]";
             // 
             // txtDateSetterStartDate
             // 
-            this.txtDateSetterStartDate.Location = new System.Drawing.Point(6, 413);
+            this.txtDateSetterStartDate.Location = new System.Drawing.Point(5, 420);
             this.txtDateSetterStartDate.Name = "txtDateSetterStartDate";
-            this.txtDateSetterStartDate.Size = new System.Drawing.Size(200, 20);
+            this.txtDateSetterStartDate.Size = new System.Drawing.Size(204, 20);
             this.txtDateSetterStartDate.TabIndex = 30;
             // 
             // label11
             // 
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.label11.Location = new System.Drawing.Point(6, 389);
+            this.label11.Location = new System.Drawing.Point(6, 395);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(204, 22);
             this.label11.TabIndex = 27;
@@ -809,7 +809,7 @@ namespace ImageRenamer
             // 
             this.lblDateOffset.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblDateOffset.Location = new System.Drawing.Point(6, 306);
+            this.lblDateOffset.Location = new System.Drawing.Point(6, 304);
             this.lblDateOffset.Name = "lblDateOffset";
             this.lblDateOffset.Size = new System.Drawing.Size(204, 22);
             this.lblDateOffset.TabIndex = 24;
@@ -820,7 +820,7 @@ namespace ImageRenamer
             // 
             this.txtDateOffset.Location = new System.Drawing.Point(37, 329);
             this.txtDateOffset.Name = "txtDateOffset";
-            this.txtDateOffset.Size = new System.Drawing.Size(169, 20);
+            this.txtDateOffset.Size = new System.Drawing.Size(173, 20);
             this.txtDateOffset.TabIndex = 23;
             this.txtDateOffset.Text = "d or d.hh:mm[:ss]";
             // 
@@ -850,7 +850,7 @@ namespace ImageRenamer
             // 
             this.btnSetExif.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSetExif.Location = new System.Drawing.Point(111, 454);
+            this.btnSetExif.Location = new System.Drawing.Point(111, 472);
             this.btnSetExif.Name = "btnSetExif";
             this.btnSetExif.Size = new System.Drawing.Size(99, 23);
             this.btnSetExif.TabIndex = 8;
@@ -862,7 +862,7 @@ namespace ImageRenamer
             // 
             this.btnSetDate.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSetDate.Location = new System.Drawing.Point(6, 454);
+            this.btnSetDate.Location = new System.Drawing.Point(5, 472);
             this.btnSetDate.Name = "btnSetDate";
             this.btnSetDate.Size = new System.Drawing.Size(99, 23);
             this.btnSetDate.TabIndex = 8;
@@ -874,7 +874,7 @@ namespace ImageRenamer
             // 
             this.btnAddToExif.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddToExif.Location = new System.Drawing.Point(111, 349);
+            this.btnAddToExif.Location = new System.Drawing.Point(111, 355);
             this.btnAddToExif.Name = "btnAddToExif";
             this.btnAddToExif.Size = new System.Drawing.Size(99, 23);
             this.btnAddToExif.TabIndex = 8;
@@ -886,7 +886,7 @@ namespace ImageRenamer
             // 
             this.btnAddToDate.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddToDate.Location = new System.Drawing.Point(6, 349);
+            this.btnAddToDate.Location = new System.Drawing.Point(5, 355);
             this.btnAddToDate.Name = "btnAddToDate";
             this.btnAddToDate.Size = new System.Drawing.Size(99, 23);
             this.btnAddToDate.TabIndex = 8;
