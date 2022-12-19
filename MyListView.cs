@@ -30,6 +30,37 @@ namespace ImageRenamer
         private const int FILESIZE_INDEX = (int)ColumnIndexes.FILESIZE_INDEX;
         private const int WRITEDATE_INDEX = (int)ColumnIndexes.WRITEDATE_INDEX;
         private const int EXIFDATE_INDEX = (int)ColumnIndexes.EXIFDATE_INDEX;
+
+        private int[] MINIMALIST_VIEW = { THUMBNAIL_INDEX, NEW_NAME_INDEX, WRITEDATE_INDEX, EXIFDATE_INDEX };
+        private bool minimalistView;
+
+        public bool MinimalistView
+        {
+            get { return minimalistView; }
+            set
+            {
+                minimalistView = value;
+                if (minimalistView)
+                {
+                    chThumb.Tag = chThumb.Width;
+                    chFilename.Tag = chFilename.Width;
+                    chNewFilename.Tag = chNewFilename.Width;
+                    chSize.Tag = chSize.Width;
+                    chDate.Tag = chDate.Width;
+                    chExifDate.Tag = chExifDate.Width;
+
+                    chFilename.Width = 0;
+                    chSize.Width = 0;    
+                }
+                else
+                {
+                    chFilename.Width = (int)chFilename.Tag;
+                    chSize.Width = (int)chSize.Tag;
+                }
+                this.Redraw();
+            }
+        }
+
         private string[] headers = { "Thumbnail", "Filename", "New filename", "Filesize", "Date", "Exif Date" };
         private String path = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
         private ListViewItem previousHoverItem = null;
@@ -488,7 +519,6 @@ namespace ImageRenamer
         public void Redraw()
         {
             this.SuspendLayout();
-            this.Columns[THUMBNAIL_INDEX].Width = thumbSize;
             this.Height = this.Height + 1;
             this.Height = this.Height - 1;
             base.Refresh();
@@ -540,17 +570,42 @@ namespace ImageRenamer
                             e.Bounds.Y + e.Bounds.Height / 2 - imageInfo.ThumbImage.Height / 2,
                             imageInfo.ThumbImage.Width,
                             imageInfo.ThumbImage.Height));
+                else
+                {
+                    Icon icon = System.Drawing.Icon.ExtractAssociatedIcon(imageInfo.FileInfo.FullName);
+                    using (Bitmap bmp = icon.ToBitmap())
+                    {
+                        e.Graphics.DrawImage(bmp,
+                            e.Bounds.X,
+                            e.Bounds.Y,
+                            e.Bounds.Height,
+                            e.Bounds.Height
+                            );
+                    }
+                }
                 int colWidth = 0;
                 int i = 0;
+
                 foreach (ListViewItem.ListViewSubItem subItem in listViewItem.SubItems)
                 {
-                    String text = subItem.Text;
-                    while ((int)e.Graphics.MeasureString(text, subItem.Font).Width > this.Columns[i].Width && text.Length > 6)
+                    if (i == THUMBNAIL_INDEX)
                     {
-                        text = text.Substring(0, text.Length - 6) + "...";
+                        this.Columns[THUMBNAIL_INDEX].Width = ThumbSize == 0 ? e.Bounds.Height : ThumbSize;
                     }
-                    e.Graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor), e.Bounds.X + colWidth, e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2);
-                    colWidth += this.Columns[i].Width;
+                    if (!MinimalistView || MINIMALIST_VIEW.Contains(i))
+                    {
+                        if (listViewItem.Selected && subItem.ForeColor == SystemColors.WindowText)
+                            subItem.ForeColor = SystemColors.HighlightText;
+                        if (!listViewItem.Selected && subItem.ForeColor == SystemColors.HighlightText)
+                            subItem.ForeColor = SystemColors.WindowText;
+                        String text = subItem.Text;
+                        while ((int)e.Graphics.MeasureString(text, subItem.Font).Width > this.Columns[i].Width && text.Length > 6)
+                        {
+                            text = text.Substring(0, text.Length - 6) + "...";
+                        }
+                        e.Graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor), e.Bounds.X + colWidth, e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2);
+                        colWidth += this.Columns[i].Width;
+                    }
                     i++;
                 }
                 if (this.Items[e.Index].Focused)

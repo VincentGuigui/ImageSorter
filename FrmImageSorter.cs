@@ -3,12 +3,11 @@ using System.IO;
 using System.Collections;
 using System.ComponentModel;
 using System.Windows.Forms;
-using System.Data;
-using System.Diagnostics;
-using System.Drawing.Imaging;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Drawing;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace ImageRenamer
 {
@@ -94,6 +93,10 @@ namespace ImageRenamer
         private Button btnSetDate;
         private Label label10;
         private TextBox txtDateCounterIncrement;
+        private GroupBox gbHelp;
+        private Label lblHelp;
+        private ToolTip toolTip;
+        private CheckBox bMinimalView;
         private IContainer components;
 
         public FrmImageRenamer()
@@ -130,6 +133,7 @@ namespace ImageRenamer
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmImageRenamer));
             this.txtFolder = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
@@ -199,6 +203,10 @@ namespace ImageRenamer
             this.btnSetDateFromExif = new System.Windows.Forms.Button();
             this.btnExifFromName = new System.Windows.Forms.Button();
             this.listView = new ImageRenamer.MyListView();
+            this.gbHelp = new System.Windows.Forms.GroupBox();
+            this.lblHelp = new System.Windows.Forms.Label();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.bMinimalView = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.tbThumbSize)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.iInsert)).BeginInit();
             this.gbBatchRename.SuspendLayout();
@@ -214,6 +222,7 @@ namespace ImageRenamer
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.gbHelp.SuspendLayout();
             this.SuspendLayout();
             // 
             // txtFolder
@@ -223,7 +232,7 @@ namespace ImageRenamer
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFolder.Location = new System.Drawing.Point(6, 11);
             this.txtFolder.Name = "txtFolder";
-            this.txtFolder.Size = new System.Drawing.Size(912, 20);
+            this.txtFolder.Size = new System.Drawing.Size(888, 20);
             this.txtFolder.TabIndex = 1;
             this.txtFolder.TextChanged += new System.EventHandler(this.txtFolder_TextChanged);
             this.txtFolder.DragDrop += new System.Windows.Forms.DragEventHandler(this.txtFolder_DragDrop);
@@ -236,9 +245,9 @@ namespace ImageRenamer
             // btnBrowse
             // 
             this.btnBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnBrowse.Location = new System.Drawing.Point(928, 8);
+            this.btnBrowse.Location = new System.Drawing.Point(900, 8);
             this.btnBrowse.Name = "btnBrowse";
-            this.btnBrowse.Size = new System.Drawing.Size(72, 23);
+            this.btnBrowse.Size = new System.Drawing.Size(100, 23);
             this.btnBrowse.TabIndex = 0;
             this.btnBrowse.Text = "Browse...";
             this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
@@ -268,7 +277,7 @@ namespace ImageRenamer
             // btnApplyChanges
             // 
             this.btnApplyChanges.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnApplyChanges.Location = new System.Drawing.Point(900, 63);
+            this.btnApplyChanges.Location = new System.Drawing.Point(900, 86);
             this.btnApplyChanges.Name = "btnApplyChanges";
             this.btnApplyChanges.Size = new System.Drawing.Size(100, 45);
             this.btnApplyChanges.TabIndex = 4;
@@ -308,6 +317,8 @@ namespace ImageRenamer
             this.txtNewFilenamePattern.Size = new System.Drawing.Size(188, 20);
             this.txtNewFilenamePattern.TabIndex = 5;
             this.txtNewFilenamePattern.Text = "%COUNTER_";
+            this.toolTip.SetToolTip(this.txtNewFilenamePattern, "Pattern:\r\nFree text\r\n%COUNTER for counter\r\n%DATE for file date\r\n%EXIF for EXIF da" +
+        "te");
             this.txtNewFilenamePattern.TextChanged += new System.EventHandler(this.txtNewFilenamePattern_TextChanged);
             // 
             // bFilename
@@ -389,6 +400,7 @@ namespace ImageRenamer
             this.txtDateCounterIncrement.Size = new System.Drawing.Size(150, 20);
             this.txtDateCounterIncrement.TabIndex = 33;
             this.txtDateCounterIncrement.Text = "d or d.hh:mm[:ss]";
+            this.toolTip.SetToolTip(this.txtDateCounterIncrement, "Format: d or d.hh:mm[:ss]");
             // 
             // txtDateCounterStartDate
             // 
@@ -673,7 +685,7 @@ namespace ImageRenamer
             // btnReset
             // 
             this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnReset.Location = new System.Drawing.Point(797, 63);
+            this.btnReset.Location = new System.Drawing.Point(900, 37);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(100, 45);
             this.btnReset.TabIndex = 4;
@@ -772,7 +784,7 @@ namespace ImageRenamer
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(6, 436);
+            this.label9.Location = new System.Drawing.Point(3, 449);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(29, 13);
             this.label9.TabIndex = 32;
@@ -786,6 +798,7 @@ namespace ImageRenamer
             this.txtDateSetterStep.Size = new System.Drawing.Size(173, 20);
             this.txtDateSetterStep.TabIndex = 31;
             this.txtDateSetterStep.Text = "d or d.hh:mm[:ss]";
+            this.toolTip.SetToolTip(this.txtDateSetterStep, "d or d.hh:mm[:ss]");
             // 
             // txtDateSetterStartDate
             // 
@@ -823,6 +836,7 @@ namespace ImageRenamer
             this.txtDateOffset.Size = new System.Drawing.Size(173, 20);
             this.txtDateOffset.TabIndex = 23;
             this.txtDateOffset.Text = "d or d.hh:mm[:ss]";
+            this.toolTip.SetToolTip(this.txtDateOffset, "d or d.hh:mm[:ss]");
             // 
             // label7
             // 
@@ -903,6 +917,7 @@ namespace ImageRenamer
             this.btnAutoFixExif.Size = new System.Drawing.Size(204, 22);
             this.btnAutoFixExif.TabIndex = 8;
             this.btnAutoFixExif.Text = "AutoFix Exif";
+            this.toolTip.SetToolTip(this.btnAutoFixExif, "Compute new approximate dates based on previous and next images");
             this.btnAutoFixExif.UseVisualStyleBackColor = true;
             this.btnAutoFixExif.Click += new System.EventHandler(this.btnAutoFixExif_Click);
             // 
@@ -951,6 +966,7 @@ namespace ImageRenamer
             this.btnAutoFixDate.Size = new System.Drawing.Size(205, 22);
             this.btnAutoFixDate.TabIndex = 4;
             this.btnAutoFixDate.Text = "AutoFix Date";
+            this.toolTip.SetToolTip(this.btnAutoFixDate, "Compute new approximate dates based on previous and next images");
             this.btnAutoFixDate.UseVisualStyleBackColor = true;
             this.btnAutoFixDate.Click += new System.EventHandler(this.btnAutoFixDate_Click);
             // 
@@ -989,11 +1005,11 @@ namespace ImageRenamer
             this.listView.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
             this.listView.FullRowSelect = true;
             this.listView.HideSelection = false;
-            this.listView.Location = new System.Drawing.Point(242, 114);
+            this.listView.Location = new System.Drawing.Point(242, 137);
             this.listView.Name = "listView";
             this.listView.Path = "";
             this.listView.ProgressBar = this.progressBar;
-            this.listView.Size = new System.Drawing.Size(758, 527);
+            this.listView.Size = new System.Drawing.Size(758, 504);
             this.listView.TabIndex = 0;
             this.listView.ThumbSize = 0;
             this.listView.UseCompatibleStateImageBehavior = false;
@@ -1002,10 +1018,44 @@ namespace ImageRenamer
             this.listView.SelectedIndexChanged += new System.EventHandler(this.listView_SelectedIndexChanged);
             this.listView.DragDrop += new System.Windows.Forms.DragEventHandler(this.listView_DragDrop);
             // 
+            // gbHelp
+            // 
+            this.gbHelp.Controls.Add(this.lblHelp);
+            this.gbHelp.Location = new System.Drawing.Point(418, 34);
+            this.gbHelp.Name = "gbHelp";
+            this.gbHelp.Size = new System.Drawing.Size(476, 97);
+            this.gbHelp.TabIndex = 19;
+            this.gbHelp.TabStop = false;
+            this.gbHelp.Text = "Help";
+            // 
+            // lblHelp
+            // 
+            this.lblHelp.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblHelp.Location = new System.Drawing.Point(6, 16);
+            this.lblHelp.Name = "lblHelp";
+            this.lblHelp.Size = new System.Drawing.Size(464, 74);
+            this.lblHelp.TabIndex = 9;
+            this.lblHelp.Text = resources.GetString("lblHelp.Text");
+            // 
+            // bMinimalView
+            // 
+            this.bMinimalView.Checked = true;
+            this.bMinimalView.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.bMinimalView.Location = new System.Drawing.Point(246, 110);
+            this.bMinimalView.Name = "bMinimalView";
+            this.bMinimalView.Size = new System.Drawing.Size(102, 24);
+            this.bMinimalView.TabIndex = 20;
+            this.bMinimalView.Text = "Minimalist View";
+            this.bMinimalView.CheckedChanged += new System.EventHandler(this.bMinimalView_CheckedChanged);
+            // 
             // FrmImageRenamer
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(1008, 661);
+            this.Controls.Add(this.bMinimalView);
+            this.Controls.Add(this.gbHelp);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnReset);
             this.Controls.Add(this.btnApplyChanges);
@@ -1043,6 +1093,7 @@ namespace ImageRenamer
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.gbHelp.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1062,11 +1113,14 @@ namespace ImageRenamer
         {
             folderBrowserDialog.SelectedPath = txtFolder.Text;
             txtDateCounterStartDate.Text = DateTime.Now.ToString();
+            toolTip.SetToolTip(txtDateCounterStartDate, "Format: " + DateTime.Now.ToString());
             txtDateSetterStartDate.Text = DateTime.Now.ToString();
+            toolTip.SetToolTip(txtDateSetterStartDate, "Format: " + DateTime.Now.ToString());
             txtFolder_TextChanged(null, null);
             bLoadThumbnail_CheckedChanged(null, null);
             bBatchRename_CheckedChanged(null, null);
             bClearFilename_CheckedChanged(null, null);
+            bMinimalView_CheckedChanged(null, null);
         }
 
         private void btnBrowse_Click(object sender, System.EventArgs e)
@@ -1455,26 +1509,64 @@ namespace ImageRenamer
             }
         }
 
+        private ImageInfo FindClosestDate(
+            int itemIndex,
+            Func<ImageInfo, DateTime> getDateFunc,
+            Func<ImageInfo, bool> getDateLockedFunc,
+            int direction,
+            out int distance)
+        {
+            int closestIndex = itemIndex + direction;
+
+            while ((direction < 0 && closestIndex >= 0)
+                || (direction > 0 && closestIndex < listView.Items.Count))
+            {
+                var tmpImageInfo = (ImageInfo)listView.Items[closestIndex].Tag;
+                if (getDateLockedFunc(tmpImageInfo) || !listView.Items[closestIndex].Selected)
+                {
+                    distance = Math.Abs(itemIndex - closestIndex);
+                    return tmpImageInfo;
+                }
+                closestIndex += direction;
+            }
+
+            distance = 0;
+            return null;
+        }
+
+        private bool ComputeMissingDate(int itemIndex,
+            Func<ImageInfo, DateTime> getDateFunc,
+            Func<ImageInfo, bool> getDateLockedFunc,
+            Func<DateTime, DateTime> setDateFunc)
+        {
+            int prevDistance, nextDistance;
+            ImageInfo prevImageInfo = FindClosestDate(itemIndex, getDateFunc, getDateLockedFunc, -1, out prevDistance);
+            ImageInfo nextImageInfo = FindClosestDate(itemIndex, getDateFunc, getDateLockedFunc, 1, out nextDistance);
+            if (prevImageInfo == null && nextImageInfo == null) return false;
+            if (prevImageInfo == null)
+                prevImageInfo = nextImageInfo;
+            if (nextImageInfo == null)
+                nextImageInfo = prevImageInfo;
+            setDateFunc(
+                getDateFunc(prevImageInfo)
+                .AddSeconds(prevDistance *
+                    (getDateFunc(nextImageInfo) - getDateFunc(prevImageInfo))
+                        .TotalSeconds / (prevDistance + nextDistance)
+                        ));
+            return true;
+        }
+
+
         private void btnAutoFixExif_Click(object sender, EventArgs e)
         {
             foreach (ListViewItem item in listView.SelectedItems)
             {
                 ImageInfo imageInfo = (ImageInfo)item.Tag;
-                if (imageInfo.NewExifDateLocked) return;
-                if (imageInfo.NewExifDate.ToString() != DateTime.MinValue.ToString()) return;
-                ImageInfo prevImageInfo = null;
-                ImageInfo nextImageInfo = null;
-                if (item.Index > 0)
-                    prevImageInfo = (ImageInfo)listView.Items[item.Index - 1].Tag;
-                if (item.Index < listView.Items.Count - 1)
-                    nextImageInfo = (ImageInfo)listView.Items[item.Index + 1].Tag;
-                if (prevImageInfo == null && nextImageInfo == null) return;
-                if (prevImageInfo == null)
-                    prevImageInfo = nextImageInfo;
-                if (nextImageInfo == null)
-                    nextImageInfo = prevImageInfo;
-                imageInfo.NewExifDate = prevImageInfo.NewExifDate.AddSeconds((nextImageInfo.NewExifDate - prevImageInfo.NewExifDate).TotalSeconds / 2d);
-                listView.RefreshListViewItem(item);
+                if (ComputeMissingDate(item.Index,
+                    (i) => i.NewExifDate,
+                    (i) => i.NewExifDateLocked,
+                    (d) => imageInfo.NewExifDate = d))
+                    listView.RefreshListViewItem(item);
             }
         }
 
@@ -1483,20 +1575,11 @@ namespace ImageRenamer
             foreach (ListViewItem item in listView.SelectedItems)
             {
                 ImageInfo imageInfo = (ImageInfo)item.Tag;
-                if (imageInfo.NewWriteDateLocked) return;
-                ImageInfo prevImageInfo = null;
-                ImageInfo nextImageInfo = null;
-                if (item.Index > 0)
-                    prevImageInfo = (ImageInfo)listView.Items[item.Index - 1].Tag;
-                if (item.Index < listView.Items.Count - 1)
-                    nextImageInfo = (ImageInfo)listView.Items[item.Index + 1].Tag;
-                if (prevImageInfo == null && nextImageInfo == null) return;
-                if (prevImageInfo == null)
-                    prevImageInfo = nextImageInfo;
-                if (nextImageInfo == null)
-                    nextImageInfo = prevImageInfo;
-                imageInfo.NewWriteDate = prevImageInfo.NewWriteDate.AddSeconds((nextImageInfo.NewWriteDate - prevImageInfo.NewWriteDate).TotalSeconds / 2d);
-                listView.RefreshListViewItem(item);
+                if (ComputeMissingDate(item.Index,
+                    (i) => i.NewWriteDate,
+                    (i) => i.NewWriteDateLocked,
+                    (d) => imageInfo.NewWriteDate = d))
+                    listView.RefreshListViewItem(item);
             }
         }
 
@@ -1732,6 +1815,11 @@ namespace ImageRenamer
         private void listView_MeasureItem(object sender, MeasureItemEventArgs e)
         {
             e.ItemHeight = listView.ThumbSize;
+        }
+
+        private void bMinimalView_CheckedChanged(object sender, EventArgs e)
+        {
+            listView.MinimalistView = bMinimalView.Checked;
         }
     }
 }
