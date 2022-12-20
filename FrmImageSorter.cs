@@ -240,6 +240,7 @@ namespace ImageRenamer
             // 
             // folderBrowserDialog
             // 
+            this.folderBrowserDialog.RootFolder = System.Environment.SpecialFolder.MyPictures;
             this.folderBrowserDialog.ShowNewFolderButton = false;
             // 
             // btnBrowse
@@ -316,7 +317,7 @@ namespace ImageRenamer
             this.txtNewFilenamePattern.Name = "txtNewFilenamePattern";
             this.txtNewFilenamePattern.Size = new System.Drawing.Size(376, 31);
             this.txtNewFilenamePattern.TabIndex = 5;
-            this.txtNewFilenamePattern.Text = "%COUNTER_";
+            this.txtNewFilenamePattern.Text = "%COUNTER ";
             this.toolTip.SetToolTip(this.txtNewFilenamePattern, "Pattern:\r\nFree text\r\n%COUNTER for counter\r\n%DATE for file date\r\n%EXIF for EXIF da" +
         "te");
             this.txtNewFilenamePattern.TextChanged += new System.EventHandler(this.txtNewFilenamePattern_TextChanged);
@@ -766,7 +767,7 @@ namespace ImageRenamer
             this.tabPage2.Location = new System.Drawing.Point(8, 39);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(440, 1073);
+            this.tabPage2.Size = new System.Drawing.Size(440, 1074);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Date";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -1416,7 +1417,6 @@ namespace ImageRenamer
             }
             return NewFilename;
         }
-
         private void btnSetDateFromFilename_Click(object sender, EventArgs e)
         {
             foreach (ListViewItem item in listView.SelectedItems)

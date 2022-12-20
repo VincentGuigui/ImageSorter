@@ -95,7 +95,6 @@ namespace ImageRenamer
         private System.Windows.Forms.ColumnHeader chDate;
         private System.Windows.Forms.ColumnHeader chExifDate;
         BufferedGraphics bufferedGraphics;
-
         private bool allowRowReorder = true;
         public bool AllowRowReorder
         {
@@ -109,7 +108,6 @@ namespace ImageRenamer
                 base.AllowDrop = value;
             }
         }
-
         public new SortOrder Sorting
         {
             get
@@ -121,7 +119,92 @@ namespace ImageRenamer
                 base.Sorting = SortOrder.None;
             }
         }
+        private ListViewItem SelectedItem;
+        private ListViewItem.ListViewSubItem SelectedSubItem;
+        private int SelectedSubItemIndex;
 
+        public MyListView() : base()
+        {
+            this.drawMode = DrawMode.Normal;
+            this.allowRowReorder = true;
+            InitializeComponent();
+
+            //Activate double buffering
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+            this.DoubleBuffered = true;
+            bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), this.Bounds);
+        }
+
+        #region Code généré par le Concepteur Windows Form
+        private void InitializeComponent()
+        {
+            this.lvSorter = new MyListViewItemSorter();
+            this.chThumb = new System.Windows.Forms.ColumnHeader();
+            this.chFilename = new System.Windows.Forms.ColumnHeader();
+            this.chNewFilename = new System.Windows.Forms.ColumnHeader();
+            this.chSize = new System.Windows.Forms.ColumnHeader();
+            this.chDate = new System.Windows.Forms.ColumnHeader();
+            this.chExifDate = new System.Windows.Forms.ColumnHeader();
+            this.lvSorter.SortColumn = NEW_NAME_INDEX;
+            this.lvSorter.Order = SortOrder.Ascending;
+
+            // 
+            // chThumb
+            // 
+            this.chThumb.Text = headers[THUMBNAIL_INDEX];
+            this.chThumb.Width = 64;
+            // 
+            // chFilename
+            // 
+            this.chFilename.Text = headers[NAME_INDEX];
+            this.chFilename.Width = 200;
+            // 
+            // chNewFilename
+            // 
+            this.chNewFilename.Text = headers[NEW_NAME_INDEX];
+            this.chNewFilename.Width = 200;
+            // 
+            // chSize
+            // 
+            this.chSize.Text = headers[FILESIZE_INDEX];
+            this.chSize.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.chSize.Width = 100;
+            // 
+            // chDate
+            // 
+            this.chDate.Text = headers[WRITEDATE_INDEX];
+            this.chDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.chDate.Width = 120;
+            // 
+            // chExifDate
+            // 
+            this.chExifDate.Text = headers[EXIFDATE_INDEX];
+            this.chExifDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.chExifDate.Width = 120;
+            // 
+            // MyListView
+            // 
+            this.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+                                                                              this.chThumb,
+                                                                              this.chFilename,
+                                                                              this.chNewFilename,
+                                                                              this.chSize,
+                                                                              this.chDate,
+                                                                              this.chExifDate});
+            this.ListViewItemSorter = lvSorter;
+            this.FullRowSelect = true;
+            this.HideSelection = false;
+            this.MinimalistView = true;
+            this.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MyListView_KeyDown);
+            this.MouseDown += MyListView_MouseDown;
+            this.MouseClick += MyListView_MouseClick;
+            this.MouseDoubleClick += MyListView_MouseDoubleClick;
+        }
+
+        #endregion
+
+        #region ListViewItemSorter class
         class MyListViewItemSorter : IComparer
         {
             /// <summary>
@@ -221,19 +304,9 @@ namespace ImageRenamer
             }
 
         }
+        #endregion
 
-        public MyListView() : base()
-        {
-            this.drawMode = DrawMode.Normal;
-            this.allowRowReorder = true;
-            InitializeComponent();
-
-            //Activate double buffering
-            this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
-            this.DoubleBuffered = true;
-            bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), this.Bounds);
-        }
-
+        #region Drag Drop
         protected override void OnItemDrag(ItemDragEventArgs e)
         {
             base.OnItemDrag(e);
@@ -422,76 +495,9 @@ namespace ImageRenamer
             base.OnDragDrop(e);
             this.ResumeLayout();
         }
-
-        #region Code généré par le Concepteur Windows Form
-        private void InitializeComponent()
-        {
-            this.lvSorter = new MyListViewItemSorter();
-            this.chThumb = new System.Windows.Forms.ColumnHeader();
-            this.chFilename = new System.Windows.Forms.ColumnHeader();
-            this.chNewFilename = new System.Windows.Forms.ColumnHeader();
-            this.chSize = new System.Windows.Forms.ColumnHeader();
-            this.chDate = new System.Windows.Forms.ColumnHeader();
-            this.chExifDate = new System.Windows.Forms.ColumnHeader();
-            this.lvSorter.SortColumn = NEW_NAME_INDEX;
-            this.lvSorter.Order = SortOrder.Ascending;
-
-            // 
-            // chThumb
-            // 
-            this.chThumb.Text = headers[THUMBNAIL_INDEX];
-            this.chThumb.Width = 64;
-            // 
-            // chFilename
-            // 
-            this.chFilename.Text = headers[NAME_INDEX];
-            this.chFilename.Width = 200;
-            // 
-            // chNewFilename
-            // 
-            this.chNewFilename.Text = headers[NEW_NAME_INDEX];
-            this.chNewFilename.Width = 200;
-            // 
-            // chSize
-            // 
-            this.chSize.Text = headers[FILESIZE_INDEX];
-            this.chSize.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.chSize.Width = 100;
-            // 
-            // chDate
-            // 
-            this.chDate.Text = headers[WRITEDATE_INDEX];
-            this.chDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.chDate.Width = 120;
-            // 
-            // chExifDate
-            // 
-            this.chExifDate.Text = headers[EXIFDATE_INDEX];
-            this.chExifDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.chExifDate.Width = 120;
-            // 
-            // MyListView
-            // 
-            this.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-                                                                              this.chThumb,
-                                                                              this.chFilename,
-                                                                              this.chNewFilename,
-                                                                              this.chSize,
-                                                                              this.chDate,
-                                                                              this.chExifDate});
-            this.ListViewItemSorter = lvSorter;
-            this.FullRowSelect = true;
-            this.HideSelection = false;
-            this.MinimalistView = true;
-            this.Sorting = System.Windows.Forms.SortOrder.Ascending;
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MyListView_KeyDown);
-            this.MouseDown += MyListView_MouseDown;
-            this.MouseClick += MyListView_MouseClick;
-            this.MouseDoubleClick += MyListView_MouseDoubleClick;
-        }
-
         #endregion
 
+        #region Custom Draw
         #region Structures
         private struct MEASUREITEMSTRUCT
         {
@@ -537,11 +543,9 @@ namespace ImageRenamer
         #endregion
 
         public const int LVS_OWNERDRAWFIXED = 0x0400;
-        //private SolidBrush foreColorBrush;
         protected override void WndProc(ref System.Windows.Forms.Message m)
         {
             base.WndProc(ref m);
-            Console.WriteLine(m.Msg + " - " + (int)ReflectedMessages.OCM_DRAWITEM);
             switch (m.Msg)
             {
                 case 0x14: // WM_ERASEBKGND
@@ -628,14 +632,6 @@ namespace ImageRenamer
         public new event DrawItemEventHandler DrawItem;
         public new event LabelEditEventHandler AfterLabelEdit;
         public event MeasureItemEventHandler MeasureItem;
-        public void Redraw()
-        {
-            this.SuspendLayout();
-            this.Height = this.Height + 1;
-            this.Height = this.Height - 1;
-            base.Refresh();
-            this.ResumeLayout();
-        }
 
         protected override CreateParams CreateParams
         {
@@ -646,7 +642,6 @@ namespace ImageRenamer
                 return cp;
             }
         }
-
         protected virtual void OnDrawItem(System.Windows.Forms.DrawItemEventArgs e)
         {
             if (this.DrawItem != null)
@@ -716,7 +711,7 @@ namespace ImageRenamer
                         {
                             text = text.Substring(0, text.Length - 6) + "...";
                         }
-                        bufferedGraphics.Graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor), 
+                        bufferedGraphics.Graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor),
                             e.Bounds.X + colWidth, e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2);
                         colWidth += this.Columns[i].Width;
                     }
@@ -731,7 +726,6 @@ namespace ImageRenamer
                 this.ResumeLayout();
             }
         }
-
         public virtual void OnMeasureItem(MeasureItemEventArgs e)
         {
             if (this.MeasureItem != null)
@@ -744,7 +738,9 @@ namespace ImageRenamer
                 e.ItemWidth = Math.Max(this.thumbSize, 16);
             }
         }
+        #endregion
 
+        #region FillListViewItem
         public void RefreshListViewItems()
         {
             if (this.ProgressBar != null)
@@ -765,15 +761,18 @@ namespace ImageRenamer
             this.ResumeLayout();
             this.ProgressBar.Value = 0;
         }
+
         private ListViewItem FillListViewItem(FileInfo fileInfo)
         {
             return FillListViewItem(null, new ImageInfo(fileInfo)); ;
         }
+
         public ListViewItem RefreshListViewItem(ListViewItem listViewItem)
         {
             return FillListViewItem(listViewItem, (ImageInfo)listViewItem.Tag);
 
         }
+
         private ListViewItem FillListViewItem(ListViewItem listViewItem, ImageInfo imageInfo)
         {
             if (listViewItem == null)
@@ -815,7 +814,9 @@ namespace ImageRenamer
             Cursor.Current = Cursors.Default;
             return listViewItem;
         }
+        #endregion
 
+        #region Add/Insert Item
         public ListViewItem AddItem(FileInfo fileInfo)
         {
             return this.InsertItem(fileInfo, this.Items.Count);
@@ -879,19 +880,9 @@ namespace ImageRenamer
             }
             this.Refresh();
         }
+        #endregion
 
-        public void LoadFolder(string path)
-        {
-            if (Directory.Exists(path))
-            {
-                this.Items.Clear();
-                this.Refresh();
-                String[] files = Directory.GetFiles(path, "*.*");
-
-                this.AddItems(files);
-            }
-        }
-
+        #region Mouse Move and Click
         public class ListItemClickEventArgs : EventArgs
         {
             public ListItemClickEventArgs(ListViewItem item, ListViewItem.ListViewSubItem subItem, int subItemIndex)
@@ -919,11 +910,7 @@ namespace ImageRenamer
             _latestMouseX = e.X;
         }
 
-        private ListViewItem SelectedItem;
-        private ListViewItem.ListViewSubItem SelectedSubItem;
-        private int SelectedSubItemIndex;
-
-        private ListViewItem.ListViewSubItem GetListViewSubItemFromCoordinates(int X)
+                private ListViewItem.ListViewSubItem GetListViewSubItemFromCoordinates(int X)
         {
             int accumulated = 0;
             int currentColWidth = 0;
@@ -972,82 +959,6 @@ namespace ImageRenamer
                 EditSelectedItems();
         }
 
-        private void MyListView_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
-        {
-            switch (e.KeyCode)
-            {
-                case Keys.Back:
-                    if (this.SelectedItems.Count > 0)
-                    {
-                        foreach (ListViewItem item in this.SelectedItems)
-                        {
-                            ImageInfo imageInfo = (ImageInfo)item.Tag;
-                            imageInfo.Reset();
-                            RefreshListViewItem(item);
-                        }
-                    }
-                    break;
-                case Keys.Delete:
-                    {
-                        this.BeginUpdate();
-                        if (this.SelectedItems.Count > 0)
-                        {
-                            int index = -1; ;
-                            foreach (ListViewItem item in this.SelectedItems)
-                            {
-                                index = Math.Max(item.Index, index);
-                                item.Remove();
-                            }
-                            index = Math.Min(index, this.Items.Count - 1);
-                            if (index != -1)
-                            {
-                                this.Items[index].Selected = true;
-                                this.Items[index].Focused = true;
-                            }
-                        }
-                        bufferedGraphics.Graphics.Clear(BackColor);
-                        this.EndUpdate();
-                        if (this.Items.Count == 0)
-                        {
-                            this.manualReorder = false;
-                            this.lvSorter.Order = SortOrder.None;
-                        }
-                    }
-                    break;
-                case Keys.F2:
-                    {
-                        if (this.SelectedItems.Count > 0)
-                        {
-                            EditSelectedItems();
-                        }
-                        break;
-                    }
-                case Keys.L:
-                    this.BeginUpdate();
-                    foreach (ListViewItem item in this.SelectedItems)
-                    {
-                        ImageInfo imageInfo = (ImageInfo)item.Tag;
-                        imageInfo.NewFilenameLocked = imageInfo.NewWriteDateLocked = imageInfo.NewWriteDateLocked = !imageInfo.NewFilenameLocked;
-                        if (this.AfterLabelEdit != null)
-                            AfterLabelEdit(this, new LabelEditEventArgs(item.Index));
-                        RefreshListViewItem(item);
-                    }
-                    e.Handled = true;
-                    e.SuppressKeyPress = true;
-                    this.EndUpdate();
-                    break;
-                case Keys.A:
-                    if (e.Control)
-                    {
-                        this.BeginUpdate();
-                        foreach (ListViewItem item in this.Items)
-                            item.Selected = true;
-                        this.EndUpdate();
-                    }
-                    break;
-            }
-        }
-
         protected override void OnColumnClick(ColumnClickEventArgs e)
         {
             if (this.manualReorder && MessageBox.Show(
@@ -1076,15 +987,9 @@ namespace ImageRenamer
             }
             this.Sort();
         }
-        protected override void OnSizeChanged(EventArgs e)
-        {
-            base.OnSizeChanged(e);
-            if (bufferedGraphics != null)
-                bufferedGraphics.Dispose();
-            bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), new Rectangle(0, 0, this.Bounds.Width, this.Bounds.Height));
-            bufferedGraphics.Graphics.Clear(BackColor);
+        #endregion
 
-        }
+        #region EditItems
         private void EditSelectedItems()
         {
             if (SelectedSubItemIndex == FILESIZE_INDEX) return;
@@ -1138,7 +1043,6 @@ namespace ImageRenamer
                 }
             }
         }
-
         private void ConvertValueForImageInfo(ImageInfo imageInfo, string newValue)
         {
             switch (SelectedSubItemIndex)
@@ -1220,5 +1124,114 @@ namespace ImageRenamer
             imageInfo.ApplyNewExifDate();
             RefreshListViewItem(item);
         }
+        #endregion
+
+        private void MyListView_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.Back:
+                    if (this.SelectedItems.Count > 0)
+                    {
+                        foreach (ListViewItem item in this.SelectedItems)
+                        {
+                            ImageInfo imageInfo = (ImageInfo)item.Tag;
+                            imageInfo.Reset();
+                            RefreshListViewItem(item);
+                        }
+                    }
+                    break;
+                case Keys.Delete:
+                    {
+                        this.BeginUpdate();
+                        if (this.SelectedItems.Count > 0)
+                        {
+                            int index = -1; ;
+                            foreach (ListViewItem item in this.SelectedItems)
+                            {
+                                index = Math.Max(item.Index, index);
+                                item.Remove();
+                            }
+                            index = Math.Min(index, this.Items.Count - 1);
+                            if (index != -1)
+                            {
+                                this.Items[index].Selected = true;
+                                this.Items[index].Focused = true;
+                            }
+                        }
+                        bufferedGraphics.Graphics.Clear(BackColor);
+                        this.EndUpdate();
+                        if (this.Items.Count == 0)
+                        {
+                            this.manualReorder = false;
+                            this.lvSorter.Order = SortOrder.None;
+                        }
+                    }
+                    break;
+                case Keys.F2:
+                    {
+                        if (this.SelectedItems.Count > 0)
+                        {
+                            EditSelectedItems();
+                        }
+                        break;
+                    }
+                case Keys.L:
+                    this.BeginUpdate();
+                    foreach (ListViewItem item in this.SelectedItems)
+                    {
+                        ImageInfo imageInfo = (ImageInfo)item.Tag;
+                        imageInfo.NewFilenameLocked = imageInfo.NewWriteDateLocked = imageInfo.NewWriteDateLocked = !imageInfo.NewFilenameLocked;
+                        if (this.AfterLabelEdit != null)
+                            AfterLabelEdit(this, new LabelEditEventArgs(item.Index));
+                        RefreshListViewItem(item);
+                    }
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    this.EndUpdate();
+                    break;
+                case Keys.A:
+                    if (e.Control)
+                    {
+                        this.BeginUpdate();
+                        foreach (ListViewItem item in this.Items)
+                            item.Selected = true;
+                        this.EndUpdate();
+                    }
+                    break;
+            }
+        }
+
+        public void Redraw()
+        {
+            this.SuspendLayout();
+            this.Height = this.Height + 1;
+            this.Height = this.Height - 1;
+            base.Refresh();
+            this.ResumeLayout();
+        }
+
+        public void LoadFolder(string path)
+        {
+            if (Directory.Exists(path))
+            {
+                this.Items.Clear();
+                this.Refresh();
+                String[] files = Directory.GetFiles(path, "*.*");
+
+                this.AddItems(files);
+            }
+        }
+
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            if (bufferedGraphics != null)
+                bufferedGraphics.Dispose();
+            bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), new Rectangle(0, 0, this.Bounds.Width, this.Bounds.Height));
+            bufferedGraphics.Graphics.Clear(BackColor);
+
+        }
+
     }
 }
