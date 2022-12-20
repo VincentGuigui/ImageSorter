@@ -204,6 +204,7 @@ namespace ImageRenamer
             }
             if (Utils.Rename(FileInfo, NewFilename))
             {
+                NewFilenameLocked = false;
                 FileInfo = new FileInfo(FileInfo.Directory + "\\" + NewFilename); ;
                 return true;
             }
