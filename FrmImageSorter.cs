@@ -1313,7 +1313,7 @@ namespace ImageRenamer
                 {
                     listView.ApplyChanges(listViewItem);
                 }
-            this.Refresh();
+            this.listView.Invalidate();
         }
 
         private void listView_AfterLabelEdit(object sender, LabelEditEventArgs e)
