@@ -1713,9 +1713,9 @@ namespace ImageRenamer
         private DateTime ComputeDateIncrement(TextBox txtStartDate, TextBox txtIncrement, int relativeBatchIndex)
         {
             DateTime startDate;
-            if (DateTime.TryParse(txtDateSetterStartDate.Text, out startDate)
+            if (DateTime.TryParse(txtStartDate.Text, out startDate)
                 ||
-                DateTime.TryParseExact(txtDateSetterStartDate.Text, txtDateFormatForFilename.Text, CultureInfo.InvariantCulture, DateTimeStyles.None, out startDate))
+                DateTime.TryParseExact(txtStartDate.Text, txtDateFormatForFilename.Text, CultureInfo.InvariantCulture, DateTimeStyles.None, out startDate))
             {
                 startDate += TimeSpan.FromSeconds(TimeSpan.Parse(txtIncrement.Text).TotalSeconds * relativeBatchIndex);
             }
