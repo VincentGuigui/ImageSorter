@@ -189,7 +189,6 @@ namespace ImageRenamer
 
         public bool ApplyNewFilename()
         {
-            NewFilenameLocked = false;
             if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return false;
             if (File.Exists(FileInfo.Directory + "\\" + NewFilename))
             {
