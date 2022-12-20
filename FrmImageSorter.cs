@@ -317,7 +317,7 @@ namespace ImageRenamer
             this.txtNewFilenamePattern.Name = "txtNewFilenamePattern";
             this.txtNewFilenamePattern.Size = new System.Drawing.Size(376, 31);
             this.txtNewFilenamePattern.TabIndex = 5;
-            this.txtNewFilenamePattern.Text = "%COUNTER ";
+            this.txtNewFilenamePattern.Text = "%COUNTER";
             this.toolTip.SetToolTip(this.txtNewFilenamePattern, "Pattern:\r\nFree text\r\n%COUNTER for counter\r\n%DATE for file date\r\n%EXIF for EXIF da" +
         "te");
             this.txtNewFilenamePattern.TextChanged += new System.EventHandler(this.txtNewFilenamePattern_TextChanged);
