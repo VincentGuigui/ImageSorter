@@ -544,7 +544,7 @@ namespace ImageRenamer
             this.btnPreviewOnSelection.Name = "btnPreviewOnSelection";
             this.btnPreviewOnSelection.Size = new System.Drawing.Size(374, 52);
             this.btnPreviewOnSelection.TabIndex = 14;
-            this.btnPreviewOnSelection.Text = "Preview on selection";
+            this.btnPreviewOnSelection.Text = "Set filename for selection";
             this.btnPreviewOnSelection.Click += new System.EventHandler(this.btnPreviewOnSelection_Click);
             // 
             // txtDateFormatForFilename
@@ -1676,12 +1676,12 @@ namespace ImageRenamer
         {
             if (listView.SelectedItems.Count > 0)
             {
-                btnPreviewOnSelection.Text = "Preview on Selection";
-                btnApplyChanges.Text = "Apply to Selection";
+                btnPreviewOnSelection.Text = "Set filename for selection";
+                btnApplyChanges.Text = "Apply to selection";
             }
             else
             {
-                btnPreviewOnSelection.Text = "Preview on all";
+                btnPreviewOnSelection.Text = "Set filename for all";
                 btnApplyChanges.Text = "Apply to all";
             }
         }
