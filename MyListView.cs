@@ -541,8 +541,12 @@ namespace ImageRenamer
         protected override void WndProc(ref System.Windows.Forms.Message m)
         {
             base.WndProc(ref m);
+            Console.WriteLine(m.Msg + " - " + (int)ReflectedMessages.OCM_DRAWITEM);
             switch (m.Msg)
             {
+                case 0x14: // WM_ERASEBKGND
+                    //bufferedGraphics.Graphics.Clear(this.BackColor);
+                    break;
                 case (int)ReflectedMessages.OCM_CTLCOLOREDIT:
                 case (int)ReflectedMessages.OCM_DRAWITEM:
                     {
@@ -654,7 +658,7 @@ namespace ImageRenamer
                 this.SuspendLayout();
                 ListViewItem listViewItem = this.Items[e.Index];
                 // Select the appropriate brush depending on if the item is selected.
-                bufferedGraphics.Graphics.FillRectangle(new SolidBrush(e.BackColor), new Rectangle(e.Bounds.X, e.Bounds.Y, this.Bounds.Width, e.Bounds.Height));
+                bufferedGraphics.Graphics.FillRectangle(new SolidBrush(listViewItem.BackColor), new Rectangle(e.Bounds.X, e.Bounds.Y, this.Bounds.Width, e.Bounds.Height));
 
                 if (listViewItem.Selected)//.(State & DrawItemState.Selected) == DrawItemState.Selected)
                 {
@@ -1001,6 +1005,7 @@ namespace ImageRenamer
                                 this.Items[index].Focused = true;
                             }
                         }
+                        bufferedGraphics.Graphics.Clear(BackColor);
                         this.EndUpdate();
                         if (this.Items.Count == 0)
                         {
