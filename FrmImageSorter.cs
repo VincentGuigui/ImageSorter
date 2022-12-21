@@ -1002,7 +1002,6 @@ namespace ImageRenamer
             this.listView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.listView.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
             this.listView.FullRowSelect = true;
             this.listView.HideSelection = false;
             this.listView.Location = new System.Drawing.Point(484, 253);
@@ -1287,33 +1286,19 @@ namespace ImageRenamer
         private void btnPreviewOnSelection_Click(object sender, EventArgs e)
         {
             int relativeBatchIndex = 0;
-            if (listView.SelectedItems.Count > 0)
-                foreach (ListViewItem listViewItem in listView.SelectedItems)
-                {
-                    listView.SetNewFilename(listViewItem, GenerateNewFilename(listViewItem, relativeBatchIndex));
-                    relativeBatchIndex++;
-                }
-            else
-                foreach (ListViewItem listViewItem in listView.Items)
-                {
-                    listView.SetNewFilename(listViewItem, GenerateNewFilename(listViewItem, relativeBatchIndex));
-                    relativeBatchIndex++;
-                }
+            listView.ForEachItems((listViewItem, imageInfo) =>
+            {
+                listView.SetNewFilename(listViewItem, GenerateNewFilename(listViewItem, relativeBatchIndex));
+                relativeBatchIndex++;
+            });
         }
-
 
         private void btnApplyChanges_Click(object sender, System.EventArgs e)
         {
-            if (listView.SelectedItems.Count > 0)
-                foreach (ListViewItem listViewItem in listView.SelectedItems)
-                {
-                    listView.ApplyChanges(listViewItem);
-                }
-            else
-                foreach (ListViewItem listViewItem in listView.Items)
-                {
-                    listView.ApplyChanges(listViewItem);
-                }
+            listView.ForEachItems((listViewItem, imageInfo) =>
+            {
+                listView.ApplyChanges(listViewItem);
+            });
             this.listView.Invalidate();
         }
 
@@ -1417,11 +1402,11 @@ namespace ImageRenamer
             }
             return NewFilename;
         }
+
         private void btnSetDateFromFilename_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 try
                 {
                     DateTime filenameDate = DateTime.ParseExact(
@@ -1431,7 +1416,7 @@ namespace ImageRenamer
                     {
                         imageInfo.NewWriteDate = filenameDate;
                         imageInfo.NewWriteDateLocked = true;
-                        listView.RefreshListViewItem(item);
+                        listView.RefreshListViewItem(listViewItem);
                     }
                 }
                 catch (Exception ex)
@@ -1439,30 +1424,28 @@ namespace ImageRenamer
                     Console.WriteLine(ex.Message);
                     Console.WriteLine(ex.StackTrace);
                 }
-            }
+            });
 
         }
 
         private void btnSetDateFromExif_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 if (imageInfo.NewExifDate.ToString() != DateTime.MinValue.ToString()
                     && imageInfo.NewWriteDate.ToString() != imageInfo.NewExifDate.ToString())
                 {
                     imageInfo.NewWriteDate = imageInfo.NewExifDate;
                     imageInfo.NewWriteDateLocked = true;
-                    listView.RefreshListViewItem(item);
+                    listView.RefreshListViewItem(listViewItem);
                 }
-            }
+            });
         }
 
         private void btnExifFromName_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 try
                 {
                     DateTime filenameDate = DateTime.ParseExact(
@@ -1472,7 +1455,7 @@ namespace ImageRenamer
                     {
                         imageInfo.NewExifDate = filenameDate;
                         imageInfo.NewExifDateLocked = true;
-                        listView.RefreshListViewItem(item);
+                        listView.RefreshListViewItem(listViewItem);
                     }
                 }
                 catch (Exception ex)
@@ -1480,31 +1463,29 @@ namespace ImageRenamer
                     Console.WriteLine(ex.Message);
                     Console.WriteLine(ex.StackTrace);
                 }
-            }
+            }, true);
         }
 
         private void btnSetExifFromDate_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 if (imageInfo.NewWriteDate.ToString() != imageInfo.NewExifDate.ToString())
                 {
                     imageInfo.NewExifDate = imageInfo.NewWriteDate;
                     imageInfo.NewExifDateLocked = true;
-                    listView.RefreshListViewItem(item);
+                    listView.RefreshListViewItem(listViewItem);
                 }
-            }
+            });
         }
 
         private void btnReset_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView.Items)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 imageInfo.Reset();
-                listView.RefreshListViewItem(item);
-            }
+                listView.RefreshListViewItem(listViewItem);
+            });
         }
 
         private ImageInfo FindClosestDate(
@@ -1557,62 +1538,58 @@ namespace ImageRenamer
 
         private void btnAutoFixExif_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
-                if (ComputeMissingDate(item.Index,
+                if (ComputeMissingDate(listViewItem.Index,
                     (i) => i.NewExifDate,
                     (i) => i.NewExifDateLocked,
                     (d) => imageInfo.NewExifDate = d))
-                    listView.RefreshListViewItem(item);
-            }
+                    listView.RefreshListViewItem(listViewItem);
+            });
         }
 
         private void btnAutoFixDate_Click(object sender, EventArgs e)
         {
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
-                if (ComputeMissingDate(item.Index,
+                if (ComputeMissingDate(listViewItem.Index,
                     (i) => i.NewWriteDate,
                     (i) => i.NewWriteDateLocked,
                     (d) => imageInfo.NewWriteDate = d))
-                    listView.RefreshListViewItem(item);
-            }
+                    listView.RefreshListViewItem(listViewItem);
+            });
         }
 
         private void btnSelectMissingExif_Click(object sender, EventArgs e)
         {
             listView.SelectedItems.Clear();
-            foreach (ListViewItem item in listView.Items)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 if (imageInfo.HasMissingExifDate())
-                    item.Selected = true;
-            }
+                    listViewItem.Selected = true;
+            }, false, false);
         }
 
         private void btnSelectUnmatchingDateFromName_Click(object sender, EventArgs e)
         {
             listView.SelectedItems.Clear();
-            foreach (ListViewItem item in listView.Items)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 try
                 {
                     DateTime filenameDate = DateTime.ParseExact(
                         imageInfo.NewFilename.Substring(0, txtDateFormatForFilename.Text.Length),
                         txtDateFormatForFilename.Text, CultureInfo.InvariantCulture);
                     if (Math.Abs((filenameDate - imageInfo.NewWriteDate).TotalSeconds) > 2d)
-                        item.Selected = true;
+                        listViewItem.Selected = true;
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                     Console.WriteLine(ex.StackTrace);
-                    item.Selected = true;
+                    listViewItem.Selected = true;
                 }
-            }
+            }, false, false);
         }
 
         private void btnLockGoodFilenames_Click(object sender, EventArgs e)
@@ -1620,12 +1597,11 @@ namespace ImageRenamer
             // unlock
             if (btnLockGoodFilenames.Tag != null)
             {
-                foreach (ListViewItem item in listView.Items)
+                listView.ForEachItems((listViewItem, imageInfo) =>
                 {
-                    ImageInfo imageInfo = (ImageInfo)item.Tag;
                     imageInfo.NewFilenameLocked = false;
-                    listView.RefreshListViewItem(item);
-                }
+                    listView.RefreshListViewItem(listViewItem);
+                }, false);
                 btnLockGoodFilenames.Text = btnLockGoodFilenames.Tag.ToString();
                 btnLockGoodFilenames.Tag = null;
             }
@@ -1651,9 +1627,8 @@ namespace ImageRenamer
                     .Replace("%DATE", dateRegex)
                     .Replace("%EXIF", dateRegex);
                 Regex regex = new Regex(pattern);
-                foreach (ListViewItem item in listView.Items)
+                listView.ForEachItems((listViewItem, imageInfo) =>
                 {
-                    ImageInfo imageInfo = (ImageInfo)item.Tag;
                     try
                     {
 
@@ -1665,8 +1640,8 @@ namespace ImageRenamer
                         Console.WriteLine(ex.Message);
                         Console.WriteLine(ex.StackTrace);
                     }
-                    listView.RefreshListViewItem(item);
-                }
+                    listView.RefreshListViewItem(listViewItem);
+                }, false);
                 btnLockGoodFilenames.Tag = btnLockGoodFilenames.Text;
                 btnLockGoodFilenames.Text = "Unlock all";
             }
@@ -1689,25 +1664,23 @@ namespace ImageRenamer
         private void btnAddToDate_Click(object sender, EventArgs e)
         {
             TimeSpan offset = TimeSpan.Parse(txtDateOffset.Text);
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 if (!imageInfo.NewWriteDateLocked)
                     imageInfo.NewWriteDate += offset;
-                listView.RefreshListViewItem(item);
-            }
+                listView.RefreshListViewItem(listViewItem);
+            });
         }
 
         private void btnAddToExif_Click(object sender, EventArgs e)
         {
             TimeSpan offset = TimeSpan.Parse(txtDateOffset.Text);
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 if (!imageInfo.NewExifDateLocked)
                     imageInfo.NewExifDate += offset;
-                listView.RefreshListViewItem(item);
-            }
+                listView.RefreshListViewItem(listViewItem);
+            });
         }
 
         private DateTime ComputeDateIncrement(TextBox txtStartDate, TextBox txtIncrement, int relativeBatchIndex)
@@ -1725,27 +1698,25 @@ namespace ImageRenamer
         private void btnSetDate_Click(object sender, EventArgs e)
         {
             int itemIndex = 0;
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 if (!imageInfo.NewWriteDateLocked)
                     imageInfo.NewWriteDate = ComputeDateIncrement(txtDateSetterStartDate, txtDateSetterStep, itemIndex);
-                listView.RefreshListViewItem(item);
+                listView.RefreshListViewItem(listViewItem);
                 itemIndex++;
-            }
+            });
         }
 
         private void btnSetExif_Click(object sender, EventArgs e)
         {
             int itemIndex = 0;
-            foreach (ListViewItem item in listView.SelectedItems)
+            listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                ImageInfo imageInfo = (ImageInfo)item.Tag;
                 if (!imageInfo.NewExifDateLocked)
                     imageInfo.NewExifDate = ComputeDateIncrement(txtDateSetterStartDate, txtDateSetterStep, itemIndex);
-                listView.RefreshListViewItem(item);
+                listView.RefreshListViewItem(listViewItem);
                 itemIndex++;
-            }
+            });
         }
 
         private void listView_DrawSubItem(object sender, DrawListViewSubItemEventArgs e)
@@ -1790,34 +1761,10 @@ namespace ImageRenamer
 
         }
 
-        private void listView_DrawItem(object sender, DrawItemEventArgs e)
-        {
-            if (e.State == DrawItemState.Selected)//.(State & DrawItemState.Selected) == DrawItemState.Selected)
-            {
-                e.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
-            }
-            else
-            {
-                e.Graphics.FillRectangle(new SolidBrush(e.BackColor), e.Bounds);
-            }
-            if (listView.DropIndex == e.Index)
-            {
-                e.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y - 1, e.Bounds.Width, 3);
-            }
-            else if (listView.DropIndex == e.Index + 1)
-            {
-                e.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y + e.Bounds.Height - 1, e.Bounds.Width, 3);
-            }
-        }
-
-        private void listView_MeasureItem(object sender, MeasureItemEventArgs e)
-        {
-            e.ItemHeight = listView.ThumbSize;
-        }
-
         private void bMinimalView_CheckedChanged(object sender, EventArgs e)
         {
             listView.MinimalistView = bMinimalView.Checked;
         }
+
     }
 }

@@ -125,7 +125,6 @@ namespace ImageRenamer
 
         public MyListView() : base()
         {
-            this.drawMode = DrawMode.Normal;
             this.allowRowReorder = true;
             InitializeComponent();
 
@@ -499,6 +498,14 @@ namespace ImageRenamer
 
         #region Custom Draw
         #region Structures
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NMHDR
+        {
+            public IntPtr hwndFrom;
+            public IntPtr idFrom;
+            public int code;
+        }
         private struct MEASUREITEMSTRUCT
         {
             public int CtlType;
@@ -530,7 +537,32 @@ namespace ImageRenamer
             public RECT rcItem;
             public IntPtr itemData;
         }
+        struct NMCUSTOMDRAW
+        {
+            public NMHDR nmcd;
+            public int dwDrawStage;
+            public IntPtr hdc;
+            public RECT rc;
+            public int dwItemSpec;
+            public int uItemState;
+            public IntPtr lItemlParam;
+        }
 
+        struct NMLVCUSTOMDRAW
+        {
+            public NMCUSTOMDRAW nmcd;
+            public int clrText;
+            public int clrTextBk;
+            public int iSubItem;
+            public int dwItemType;
+            public int clrFace;
+            public int iIconEffect;
+            public int iIconPhase;
+            public int iPartId;
+            public int iStateId;
+            public RECT rcText;
+            public uint uAlign;
+        }
         #endregion
         #region Enumération
         private enum ReflectedMessages
@@ -543,52 +575,85 @@ namespace ImageRenamer
         #endregion
 
         public const int LVS_OWNERDRAWFIXED = 0x0400;
+        private bool isInWmPaintMsg = false;
+
         protected override void WndProc(ref System.Windows.Forms.Message m)
         {
             base.WndProc(ref m);
+
+            Console.WriteLine(m.Msg);
             switch (m.Msg)
             {
                 case 0x14: // WM_ERASEBKGND
                     //bufferedGraphics.Graphics.Clear(this.BackColor);
                     break;
+                case 0x0F: // WM_PAINT
+                    this.isInWmPaintMsg = true;
+                    //base.WndProc(ref m);
+                    //bufferedGraphic.Graphics.Clear(this.BackColor);
+                    this.isInWmPaintMsg = false;
+                    break;
+                case 0x4E: // WM_NOTIFY:
+                    //NMHDR nmhdr = (NMHDR)m.GetLParam(typeof(NMHDR));
+                    break;
+                case 0x204E: // WM_REFLECT_NOTIFY
+                    NMHDR nmhdr = (NMHDR)m.GetLParam(typeof(NMHDR));
+                    if (nmhdr.code == -12) // NM_CUSTOMDRAW 
+                    {
+                        //if (this.isInWmPaintMsg)
+                        //    base.WndProc(ref m);
+                        NMLVCUSTOMDRAW nmcustomdraw = (NMLVCUSTOMDRAW)m.GetLParam(typeof(NMLVCUSTOMDRAW));
+
+                        if (nmcustomdraw.nmcd.dwDrawStage == 0) // CDDS_POSTPAINT
+                        {
+                            //bufferedGraphics.Graphics.Clear(this.BackColor);
+                        }
+                    }
+                    //else
+                    //    base.WndProc(ref m);
+                    break;
                 case (int)ReflectedMessages.OCM_CTLCOLOREDIT:
                 case (int)ReflectedMessages.OCM_DRAWITEM:
                     {
-                        DrawItemStruct dis =
-                            (DrawItemStruct)m.GetLParam(typeof(DrawItemStruct));
+                        DrawItemStruct dis = (DrawItemStruct)m.GetLParam(typeof(DrawItemStruct));
 
                         Graphics graph = Graphics.FromHdc(dis.hDC);
                         Rectangle rect = new
                             Rectangle(dis.rcItem.left, dis.rcItem.top, dis.rcItem.right -
                             dis.rcItem.left, dis.rcItem.bottom - dis.rcItem.top);
                         int index = dis.itemID;
-                        DrawItemState state;
+                        ListViewItemStates state;
                         if (dis.itemState == 1)
                         {
-                            state = DrawItemState.Selected;
+                            state = ListViewItemStates.Selected;
                         }
                         else
                             if (dis.itemState == 17)
                         {
-                            state = DrawItemState.Focus;
+                            state = ListViewItemStates.Focused;
                         }
                         else
                         {
-                            state = DrawItemState.None;
+                            state = ListViewItemStates.Default;
                         }
 
-                        System.Windows.Forms.DrawItemEventArgs e = new
-                            System.Windows.Forms.DrawItemEventArgs(graph, Font, rect, index,
-                            state, this.Items[index].ForeColor, this.Items[index].BackColor);
-                        this.OnDrawItem(e);
+                        //System.Windows.Forms.DrawItemEventArgs e = new System.Windows.Forms.DrawItemEventArgs(graph, Font, rect, index, state, this.Items[index].ForeColor, this.Items[index].BackColor);
+                        DrawListViewItemEventArgs e = new DrawListViewItemEventArgs(graph, this.Items[index], rect, index, state);
+                        try
+                        {
+                            this.MyOnDrawItem(e);
+                        }
+                        catch { }
                         graph.Dispose();
                         break;
                     }
 
                 case (int)ReflectedMessages.OCM_MESUREITEM:
+                    //base.WndProc(ref m);
                     this.WmReflectMeasureItem(ref m);
                     break;
                 default:
+                    //Console.WriteLine(m.Msg);
                     break;
 
             }
@@ -622,14 +687,7 @@ namespace ImageRenamer
             m.Result = ((IntPtr)1);
         }
 
-        private DrawMode drawMode;
-        public virtual DrawMode DrawMode
-        {
-            get { return drawMode; }
-            set { drawMode = value; }
-        }
-
-        public new event DrawItemEventHandler DrawItem;
+        //public new event DrawItemEventHandler DrawItem;
         public new event LabelEditEventHandler AfterLabelEdit;
         public event MeasureItemEventHandler MeasureItem;
 
@@ -638,94 +696,90 @@ namespace ImageRenamer
             get
             {
                 CreateParams cp = base.CreateParams;
-                cp.Style |= (drawMode != DrawMode.Normal) ? LVS_OWNERDRAWFIXED : 0;
+                cp.Style |= LVS_OWNERDRAWFIXED;
                 return cp;
             }
         }
-        protected virtual void OnDrawItem(System.Windows.Forms.DrawItemEventArgs e)
+        protected virtual void MyOnDrawItem(System.Windows.Forms.DrawListViewItemEventArgs e)
         {
-            if (this.DrawItem != null)
+            Graphics graphics = bufferedGraphics.Graphics;
+            this.SuspendLayout();
+            //this.BeginUpdate();
+            ListViewItem listViewItem = this.Items[e.Item.Index];
+            // Select the appropriate brush depending on if the item is selected.
+            graphics.FillRectangle(new SolidBrush(listViewItem.BackColor), new Rectangle(e.Bounds.X, e.Bounds.Y, this.Bounds.Width, e.Bounds.Height));
+
+            if (listViewItem.Selected)//.(State & DrawItemState.Selected) == DrawItemState.Selected)
             {
-                this.DrawItem(this, e);
+                graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
             }
             else
             {
-                this.SuspendLayout();
-                ListViewItem listViewItem = this.Items[e.Index];
-                // Select the appropriate brush depending on if the item is selected.
-                bufferedGraphics.Graphics.FillRectangle(new SolidBrush(listViewItem.BackColor), new Rectangle(e.Bounds.X, e.Bounds.Y, this.Bounds.Width, e.Bounds.Height));
-
-                if (listViewItem.Selected)//.(State & DrawItemState.Selected) == DrawItemState.Selected)
-                {
-                    bufferedGraphics.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
-                }
-                else
-                {
-                    bufferedGraphics.Graphics.FillRectangle(new SolidBrush(e.BackColor), e.Bounds);
-                }
-                if (DropIndex == e.Index)
-                {
-                    bufferedGraphics.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y - 1, e.Bounds.Width, 3);
-                }
-                else if (DropIndex == e.Index + 1)
-                {
-                    bufferedGraphics.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y + e.Bounds.Height - 1, e.Bounds.Width, 3);
-                }
-                ImageInfo imageInfo = (ImageInfo)listViewItem.Tag;
-                if (imageInfo.ThumbImage != null && this.thumbSize != 0)
-                    bufferedGraphics.Graphics.DrawImage(imageInfo.ThumbImage,
-                         new RectangleF(e.Bounds.X + e.Bounds.Height / 2 - imageInfo.ThumbImage.Width / 2,
-                             e.Bounds.Y + e.Bounds.Height / 2 - imageInfo.ThumbImage.Height / 2,
-                             imageInfo.ThumbImage.Width,
-                             imageInfo.ThumbImage.Height));
-                else
-                {
-                    Icon icon = System.Drawing.Icon.ExtractAssociatedIcon(imageInfo.FileInfo.FullName);
-                    using (Bitmap bmp = icon.ToBitmap())
-                    {
-                        bufferedGraphics.Graphics.DrawImage(bmp,
-                             e.Bounds.X,
-                             e.Bounds.Y,
-                             e.Bounds.Height,
-                             e.Bounds.Height
-                             );
-                    }
-                }
-                int colWidth = 0;
-                int i = 0;
-
-                foreach (ListViewItem.ListViewSubItem subItem in listViewItem.SubItems)
-                {
-                    if (i == THUMBNAIL_INDEX)
-                    {
-                        this.Columns[THUMBNAIL_INDEX].Width = ThumbSize == 0 ? e.Bounds.Height : ThumbSize;
-                    }
-                    if (this.Columns[i].Width > 0)
-                    {
-                        if (listViewItem.Selected && subItem.ForeColor == SystemColors.WindowText)
-                            subItem.ForeColor = SystemColors.HighlightText;
-                        if (!listViewItem.Selected && subItem.ForeColor == SystemColors.HighlightText)
-                            subItem.ForeColor = SystemColors.WindowText;
-                        String text = subItem.Text;
-                        while ((int)e.Graphics.MeasureString(text, subItem.Font).Width > this.Columns[i].Width && text.Length > 6)
-                        {
-                            text = text.Substring(0, text.Length - 6) + "...";
-                        }
-                        bufferedGraphics.Graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor),
-                            e.Bounds.X + colWidth, e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2);
-                        colWidth += this.Columns[i].Width;
-                    }
-                    i++;
-                }
-                if (this.Items[e.Index].Focused)
-                {
-                    System.Drawing.Drawing2D.HatchBrush b = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.DottedGrid, SystemColors.Highlight, Color.FromArgb((byte)~SystemColors.Highlight.R, (byte)~SystemColors.Highlight.G, (byte)~SystemColors.Highlight.B));
-                    bufferedGraphics.Graphics.DrawRectangle(new Pen(b), e.Bounds.X, e.Bounds.Y, e.Bounds.Width - 1, e.Bounds.Height - 1);
-                }
-                bufferedGraphics.Render(e.Graphics);
-                this.ResumeLayout();
+                graphics.FillRectangle(new SolidBrush(e.Item.BackColor), e.Bounds);
             }
+            if (DropIndex == e.Item.Index)
+            {
+                graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y - 1, e.Bounds.Width, 3);
+            }
+            else if (DropIndex == e.Item.Index + 1)
+            {
+                graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y + e.Bounds.Height - 1, e.Bounds.Width, 3);
+            }
+            ImageInfo imageInfo = (ImageInfo)listViewItem.Tag;
+            if (imageInfo.ThumbImage != null && this.thumbSize != 0)
+                graphics.DrawImage(imageInfo.ThumbImage,
+                     new RectangleF(e.Bounds.X + e.Bounds.Height / 2 - imageInfo.ThumbImage.Width / 2,
+                         e.Bounds.Y + e.Bounds.Height / 2 - imageInfo.ThumbImage.Height / 2,
+                         imageInfo.ThumbImage.Width,
+                         imageInfo.ThumbImage.Height));
+            else
+            {
+                Icon icon = System.Drawing.Icon.ExtractAssociatedIcon(imageInfo.FileInfo.FullName);
+                using (Bitmap bmp = icon.ToBitmap())
+                {
+                    graphics.DrawImage(bmp,
+                         e.Bounds.X,
+                         e.Bounds.Y,
+                         e.Bounds.Height,
+                         e.Bounds.Height
+                         );
+                }
+            }
+            int colWidth = 0;
+            int i = 0;
+
+            foreach (ListViewItem.ListViewSubItem subItem in listViewItem.SubItems)
+            {
+                if (i == THUMBNAIL_INDEX)
+                {
+                    this.Columns[THUMBNAIL_INDEX].Width = ThumbSize == 0 ? e.Bounds.Height : ThumbSize;
+                }
+                if (this.Columns[i].Width > 0)
+                {
+                    if (listViewItem.Selected && subItem.ForeColor == SystemColors.WindowText)
+                        subItem.ForeColor = SystemColors.HighlightText;
+                    if (!listViewItem.Selected && subItem.ForeColor == SystemColors.HighlightText)
+                        subItem.ForeColor = SystemColors.WindowText;
+                    String text = subItem.Text;
+                    while ((int)e.Graphics.MeasureString(text, subItem.Font).Width > this.Columns[i].Width && text.Length > 6)
+                    {
+                        text = text.Substring(0, text.Length - 6) + "...";
+                    }
+                    graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor), 
+                        e.Bounds.X + colWidth, (int)(e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2));
+                    colWidth += this.Columns[i].Width;
+                }
+                i++;
+            }
+            if (this.Items[e.Item.Index].Focused)
+            {
+                System.Drawing.Drawing2D.HatchBrush b = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.DottedGrid, SystemColors.Highlight, Color.FromArgb((byte)~SystemColors.Highlight.R, (byte)~SystemColors.Highlight.G, (byte)~SystemColors.Highlight.B));
+                graphics.DrawRectangle(new Pen(b), e.Bounds.X, e.Bounds.Y, e.Bounds.Width - 1, e.Bounds.Height - 1);
+            }
+            bufferedGraphics.Render(e.Graphics);
+            this.ResumeLayout();
         }
+
         public virtual void OnMeasureItem(MeasureItemEventArgs e)
         {
             if (this.MeasureItem != null)
@@ -874,9 +928,12 @@ namespace ImageRenamer
                 this.ProgressBar.Value = 0;
             if (this.Items.Count > 0)
             {
-                chNewFilename.Width = (int)bufferedGraphics.Graphics.MeasureString(
+                Graphics graphics = Graphics.FromHwnd(this.Handle);
+
+                chNewFilename.Width = (int)graphics.MeasureString(
                     this.Items.Cast<ListViewItem>().OrderByDescending(i => i.SubItems[NEW_NAME_INDEX].Text.Length).First().SubItems[NEW_NAME_INDEX].Text,
                     this.Font).Width + 20;
+                graphics.Dispose();
             }
             this.Refresh();
         }
@@ -910,7 +967,7 @@ namespace ImageRenamer
             _latestMouseX = e.X;
         }
 
-                private ListViewItem.ListViewSubItem GetListViewSubItemFromCoordinates(int X)
+        private ListViewItem.ListViewSubItem GetListViewSubItemFromCoordinates(int X)
         {
             int accumulated = 0;
             int currentColWidth = 0;
@@ -1225,13 +1282,55 @@ namespace ImageRenamer
 
         protected override void OnSizeChanged(EventArgs e)
         {
-            base.OnSizeChanged(e);
             if (bufferedGraphics != null)
                 bufferedGraphics.Dispose();
             bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), new Rectangle(0, 0, this.Bounds.Width, this.Bounds.Height));
             bufferedGraphics.Graphics.Clear(BackColor);
-
+            base.OnSizeChanged(e);
         }
 
+        public void ForEachItems(Action<ListViewItem, ImageInfo> func, bool showProgress = true, bool selectedOnly = false)
+        {
+            if (selectedOnly || SelectedItems.Count > 0)
+            {
+                if (showProgress && ProgressBar != null)
+                {
+                    ProgressBar.Value = 0;
+                    ProgressBar.Maximum = this.SelectedItems.Count;
+                }
+                foreach (ListViewItem item in this.SelectedItems)
+                {
+
+                    func(item, (ImageInfo)item.Tag);
+                    if (showProgress && ProgressBar != null)
+                    {
+                        ProgressBar.Value++;
+                        ProgressBar.Update();
+                    }
+                }
+            }
+            else
+            {
+                if (showProgress && ProgressBar != null)
+                {
+                    ProgressBar.Value = 0;
+                    ProgressBar.Maximum = this.Items.Count;
+                }
+                foreach (ListViewItem item in this.Items)
+                {
+                    func(item, (ImageInfo)item.Tag);
+                    if (showProgress && ProgressBar != null)
+                    {
+                        ProgressBar.Value++;
+                        ProgressBar.Update();
+                    }
+                }
+            }
+            if (showProgress && ProgressBar != null)
+            {
+                ProgressBar.Value = 0;
+                ProgressBar.Update();
+            }
+        }
     }
 }
