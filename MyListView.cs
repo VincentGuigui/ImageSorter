@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace ImageRenamer
 {
@@ -24,12 +25,12 @@ namespace ImageRenamer
             WRITEDATE_INDEX,
             EXIFDATE_INDEX
         }
-        private const int THUMBNAIL_INDEX = (int)ColumnIndexes.THUMBNAIL_INDEX;
-        private const int NAME_INDEX = (int)ColumnIndexes.NAME_INDEX;
-        private const int NEW_NAME_INDEX = (int)ColumnIndexes.NEW_NAME_INDEX;
-        private const int FILESIZE_INDEX = (int)ColumnIndexes.FILESIZE_INDEX;
-        private const int WRITEDATE_INDEX = (int)ColumnIndexes.WRITEDATE_INDEX;
-        private const int EXIFDATE_INDEX = (int)ColumnIndexes.EXIFDATE_INDEX;
+        public const int THUMBNAIL_INDEX = (int)ColumnIndexes.THUMBNAIL_INDEX;
+        public const int NAME_INDEX = (int)ColumnIndexes.NAME_INDEX;
+        public const int NEW_NAME_INDEX = (int)ColumnIndexes.NEW_NAME_INDEX;
+        public const int FILESIZE_INDEX = (int)ColumnIndexes.FILESIZE_INDEX;
+        public const int WRITEDATE_INDEX = (int)ColumnIndexes.WRITEDATE_INDEX;
+        public const int EXIFDATE_INDEX = (int)ColumnIndexes.EXIFDATE_INDEX;
         private bool manualReorder = false;
         private int[] MINIMALIST_VIEW = { THUMBNAIL_INDEX, NEW_NAME_INDEX, WRITEDATE_INDEX, EXIFDATE_INDEX };
         private bool minimalistView;
@@ -146,7 +147,6 @@ namespace ImageRenamer
             this.chExifDate = new System.Windows.Forms.ColumnHeader();
             this.lvSorter.SortColumn = NEW_NAME_INDEX;
             this.lvSorter.Order = SortOrder.Ascending;
-
             // 
             // chThumb
             // 
@@ -200,6 +200,7 @@ namespace ImageRenamer
             this.MouseClick += MyListView_MouseClick;
             this.MouseDoubleClick += MyListView_MouseDoubleClick;
         }
+
 
         #endregion
 
@@ -637,7 +638,6 @@ namespace ImageRenamer
                             state = ListViewItemStates.Default;
                         }
 
-                        //System.Windows.Forms.DrawItemEventArgs e = new System.Windows.Forms.DrawItemEventArgs(graph, Font, rect, index, state, this.Items[index].ForeColor, this.Items[index].BackColor);
                         DrawListViewItemEventArgs e = new DrawListViewItemEventArgs(graph, this.Items[index], rect, index, state);
                         try
                         {
@@ -765,7 +765,7 @@ namespace ImageRenamer
                     {
                         text = text.Substring(0, text.Length - 6) + "...";
                     }
-                    graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor), 
+                    graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor),
                         e.Bounds.X + colWidth, (int)(e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2));
                     colWidth += this.Columns[i].Width;
                 }
@@ -1084,29 +1084,38 @@ namespace ImageRenamer
                     ? FrmInputDialog.InputScopeEnum.Date : FrmInputDialog.InputScopeEnum.Filename
                     );
                 frmFilenameInput.Text = "Edit " + this.Columns[SelectedSubItemIndex].Text;
-                DialogResult res = frmFilenameInput.ShowDialog();
-                if (res == DialogResult.OK)
+                DialogResult inputRes = frmFilenameInput.ShowDialog();
+                if (inputRes == DialogResult.OK)
                 {
                     if (value != frmFilenameInput.Value)
                     {
-                        ConvertValueForImageInfo(imageInfo, frmFilenameInput.Value);
+                        DialogResult uniqnessResult = ConvertValueForImageInfo(imageInfo, frmFilenameInput.Value);
+                        if (uniqnessResult == DialogResult.Cancel)
+                        {
+                            break;
+                        }
                         if (this.AfterLabelEdit != null)
                             AfterLabelEdit(this, new LabelEditEventArgs(item.Index));
+                        this.RefreshListViewItem(item);
                     }
                 }
-                else if (res == DialogResult.Abort)
+                else if (inputRes == DialogResult.Abort)
                 {
                     break;
                 }
             }
         }
-        private void ConvertValueForImageInfo(ImageInfo imageInfo, string newValue)
+
+        private DialogResult ConvertValueForImageInfo(ImageInfo imageInfo, string newValue, bool inBatch = false)
         {
             switch (SelectedSubItemIndex)
             {
                 case NEW_NAME_INDEX:
                     imageInfo.NewFilenameLocked = false;
                     imageInfo.NewFilename = newValue;
+                    DialogResult uniqnessResult = imageInfo.EnsureUniqueFilename(inBatch, this.Items.Cast<ListViewItem>().Select(i => ((ImageInfo)i.Tag).NewFilename).ToList());
+                    if (inBatch && uniqnessResult == DialogResult.Cancel)
+                        return DialogResult.Cancel;
                     imageInfo.NewFilenameLocked = imageInfo.NewFilename != imageInfo.FileInfo.Name;
                     break;
                 case WRITEDATE_INDEX:
@@ -1122,12 +1131,7 @@ namespace ImageRenamer
                 default:
                     break;
             }
-        }
-
-        public void SetNewFilename(ListViewItem item, string newFilename)
-        {
-            ((ImageInfo)item.Tag).NewFilename = newFilename;
-            RefreshListViewItem(item);
+            return DialogResult.OK;
         }
 
         public void ApplyChanges(ListViewItem item)
@@ -1289,41 +1293,32 @@ namespace ImageRenamer
             base.OnSizeChanged(e);
         }
 
-        public void ForEachItems(Action<ListViewItem, ImageInfo> func, bool showProgress = true, bool selectedOnly = false)
+        public void ForEachItems(Action<ListViewItem, ImageInfo> action, bool showProgress = true, bool selectedOnly = false)
         {
-            if (selectedOnly || SelectedItems.Count > 0)
-            {
-                if (showProgress && ProgressBar != null)
-                {
-                    ProgressBar.Value = 0;
-                    ProgressBar.Maximum = this.SelectedItems.Count;
-                }
-                foreach (ListViewItem item in this.SelectedItems)
-                {
+            ForEachItems((listViewItem, imageInfo) => { action(listViewItem, imageInfo); return DialogResult.OK; });
+        }
 
-                    func(item, (ImageInfo)item.Tag);
-                    if (showProgress && ProgressBar != null)
-                    {
-                        ProgressBar.Value++;
-                        ProgressBar.Update();
-                    }
-                }
-            }
+        public void ForEachItems(Func<ListViewItem, ImageInfo, DialogResult> func, bool showProgress = true, bool selectedOnly = false)
+        {
+            ICollection items;
+            if (selectedOnly || SelectedItems.Count > 0)
+                items = this.SelectedItems;
             else
+                items = this.Items;
+            if (showProgress && ProgressBar != null)
             {
+                ProgressBar.Value = 0;
+                ProgressBar.Maximum = items.Count;
+            }
+            foreach (ListViewItem item in items)
+            {
+                DialogResult result = func(item, (ImageInfo)item.Tag);
+                if (result == DialogResult.Cancel)
+                    break;
                 if (showProgress && ProgressBar != null)
                 {
-                    ProgressBar.Value = 0;
-                    ProgressBar.Maximum = this.Items.Count;
-                }
-                foreach (ListViewItem item in this.Items)
-                {
-                    func(item, (ImageInfo)item.Tag);
-                    if (showProgress && ProgressBar != null)
-                    {
-                        ProgressBar.Value++;
-                        ProgressBar.Update();
-                    }
+                    ProgressBar.Value++;
+                    ProgressBar.Update();
                 }
             }
             if (showProgress && ProgressBar != null)
@@ -1332,5 +1327,6 @@ namespace ImageRenamer
                 ProgressBar.Update();
             }
         }
+
     }
 }

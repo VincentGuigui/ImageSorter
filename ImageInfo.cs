@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Collections;
 using System.Text;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace ImageRenamer
 {
@@ -89,8 +90,7 @@ namespace ImageRenamer
                 {
                     try
                     {
-                        img = Image.FromFile(this.FileInfo.Directory + "\\" + this.FileInfo.Name);
-                        MetaData = img.PropertyItems;
+                        img = Image.FromFile(this.FileInfo.FullName);
                         if (ThumbSize > 0)
                         {
                             if (img.Width > img.Height)
@@ -108,6 +108,7 @@ namespace ImageRenamer
                     catch
                     {
                     }
+
                 }
             }
             if (MetaDataRequired && MetaData != null)
@@ -187,24 +188,45 @@ namespace ImageRenamer
             }
         }
 
+        public DialogResult EnsureUniqueFilename(bool inBatch, List<string> ExcludedFilenames = null)
+        {
+            if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return DialogResult.Yes;
+            string newFullname = Path.Combine(FileInfo.Directory.FullName, NewFilename);
+            if (File.Exists(newFullname) || (ExcludedFilenames != null && ExcludedFilenames.Contains(newFilename.ToLower())))
+            {
+                DialogResult result = MessageBox.Show("File already exists. Do you want to add a counter ?", "File exists",
+                    inBatch ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    NewFilename = Utils.DeclineFilename(newFullname, ExcludedFilenames).Name;
+                    return result;
+                }
+                return result;
+            }
+            return DialogResult.Yes;
+        }
+
         public bool ApplyNewFilename()
         {
-            if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return false;
-            if (File.Exists(FileInfo.Directory + "\\" + NewFilename))
-            {
-                if (MessageBox.Show("File already exists. Do you want to add a counter ?", "File exists", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    NewFilename = Utils.DeclineFilename(NewFilename, FileInfo.DirectoryName, new ArrayList());
-                }
-                else
-                {
-                    return false;
-                }
-            }
+            //if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return false;
+            //FileInfo newFileInfo = new FileInfo(Path.Combine(FileInfo.Directory.FullName, NewFilename));
+            //if (newFileInfo.Exists)
+            //{
+            //    if (MessageBox.Show("File already exists. Do you want to add a counter ?", "File exists", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            //    {
+            //        newFileInfo = Utils.DeclineFilename(newFileInfo.FullName, new ArrayList());
+            //    }
+            //    else
+            //    {
+            //        return false;
+            //    }
+            //}
             if (Utils.Rename(FileInfo, NewFilename))
             {
+
                 NewFilenameLocked = false;
-                FileInfo = new FileInfo(FileInfo.Directory + "\\" + NewFilename); ;
+                FileInfo = new FileInfo(Path.Combine(FileInfo.Directory.FullName, NewFilename));
+                //FileInfo = newFileInfo;
                 return true;
             }
             else
