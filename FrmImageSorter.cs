@@ -100,6 +100,7 @@ namespace ImageRenamer
         private ToolTip toolTip;
         private CheckBox bMinimalView;
         private PictureBox previewThumbnail;
+        private CheckBox bLivePreview;
         private IContainer components;
 
         public FrmImageRenamer()
@@ -108,7 +109,6 @@ namespace ImageRenamer
             // Requis pour la prise en charge du Concepteur Windows Forms
             //
             InitializeComponent();
-            listView.ProgressBar = this.progressBar;
             cbChangeExtension.Items.Clear();
             cbChangeExtension.DataSource = System.Enum.GetValues(typeof(ExtensionTransformation));
             btnThumbSizeOk_Click(null, null);
@@ -150,6 +150,7 @@ namespace ImageRenamer
             this.txtNewFilenamePattern = new System.Windows.Forms.TextBox();
             this.bFilename = new System.Windows.Forms.CheckBox();
             this.gbBatchRename = new System.Windows.Forms.GroupBox();
+            this.bLivePreview = new System.Windows.Forms.CheckBox();
             this.bDateCounter = new System.Windows.Forms.CheckBox();
             this.gbDateCounter = new System.Windows.Forms.GroupBox();
             this.label10 = new System.Windows.Forms.Label();
@@ -335,13 +336,14 @@ namespace ImageRenamer
             this.bFilename.Size = new System.Drawing.Size(165, 29);
             this.bFilename.TabIndex = 0;
             this.bFilename.Text = "File Rename";
-            this.bFilename.CheckedChanged += new System.EventHandler(this.bBatchRename_CheckedChanged);
+            this.bFilename.CheckedChanged += new System.EventHandler(this.bFilename_CheckedChanged);
             // 
             // gbBatchRename
             // 
             this.gbBatchRename.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.gbBatchRename.Controls.Add(this.bLivePreview);
             this.gbBatchRename.Controls.Add(this.bDateCounter);
             this.gbBatchRename.Controls.Add(this.gbDateCounter);
             this.gbBatchRename.Controls.Add(this.bCounter);
@@ -360,9 +362,19 @@ namespace ImageRenamer
             this.gbBatchRename.Controls.Add(this.label5);
             this.gbBatchRename.Location = new System.Drawing.Point(12, 11);
             this.gbBatchRename.Name = "gbBatchRename";
-            this.gbBatchRename.Size = new System.Drawing.Size(396, 843);
+            this.gbBatchRename.Size = new System.Drawing.Size(396, 913);
             this.gbBatchRename.TabIndex = 11;
             this.gbBatchRename.TabStop = false;
+            // 
+            // bLivePreview
+            // 
+            this.bLivePreview.AutoSize = true;
+            this.bLivePreview.Location = new System.Drawing.Point(12, 835);
+            this.bLivePreview.Name = "bLivePreview";
+            this.bLivePreview.Size = new System.Drawing.Size(224, 29);
+            this.bLivePreview.TabIndex = 17;
+            this.bLivePreview.Text = "Live Preview on all";
+            this.bLivePreview.CheckedChanged += new System.EventHandler(this.bLivePreview_CheckedChanged);
             // 
             // bDateCounter
             // 
@@ -702,7 +714,7 @@ namespace ImageRenamer
             // 
             this.btnLockGoodFilenames.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnLockGoodFilenames.Location = new System.Drawing.Point(12, 872);
+            this.btnLockGoodFilenames.Location = new System.Drawing.Point(12, 955);
             this.btnLockGoodFilenames.Name = "btnLockGoodFilenames";
             this.btnLockGoodFilenames.Size = new System.Drawing.Size(396, 54);
             this.btnLockGoodFilenames.TabIndex = 17;
@@ -739,7 +751,7 @@ namespace ImageRenamer
             // 
             this.btnSelectUnmatchingDateFromName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSelectUnmatchingDateFromName.Location = new System.Drawing.Point(12, 931);
+            this.btnSelectUnmatchingDateFromName.Location = new System.Drawing.Point(12, 1014);
             this.btnSelectUnmatchingDateFromName.Name = "btnSelectUnmatchingDateFromName";
             this.btnSelectUnmatchingDateFromName.Size = new System.Drawing.Size(396, 52);
             this.btnSelectUnmatchingDateFromName.TabIndex = 20;
@@ -1045,7 +1057,6 @@ namespace ImageRenamer
             // listView
             // 
             this.listView.AllowDrop = true;
-            this.listView.AllowRowReorder = true;
             this.listView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -1054,6 +1065,7 @@ namespace ImageRenamer
             this.listView.Location = new System.Drawing.Point(484, 253);
             this.listView.MinimalistView = true;
             this.listView.Name = "listView";
+            this.listView.PreviewThumbnail = this.previewThumbnail;
             this.listView.ProgressBar = this.progressBar;
             this.listView.Size = new System.Drawing.Size(1522, 931);
             this.listView.TabIndex = 0;
@@ -1062,8 +1074,6 @@ namespace ImageRenamer
             this.listView.View = System.Windows.Forms.View.Details;
             this.listView.SelectedIndexChanged += new System.EventHandler(this.listView_SelectedIndexChanged);
             this.listView.DragDrop += new System.Windows.Forms.DragEventHandler(this.listView_DragDrop);
-            this.listView.MouseLeave += new System.EventHandler(this.listView_MouseLeave);
-            this.listView.MouseMove += new System.Windows.Forms.MouseEventHandler(this.listView_MouseMove);
             // 
             // FrmImageRenamer
             // 
@@ -1135,7 +1145,7 @@ namespace ImageRenamer
             toolTip.SetToolTip(txtDateSetterStartDate, "Format: " + DateTime.Now.ToString());
             txtFolder_TextChanged(null, null);
             bLoadThumbnail_CheckedChanged(null, null);
-            bBatchRename_CheckedChanged(null, null);
+            bFilename_CheckedChanged(null, null);
             bClearFilename_CheckedChanged(null, null);
         }
 
@@ -1196,13 +1206,13 @@ namespace ImageRenamer
 
         private void listView_DragDrop(object sender, System.Windows.Forms.DragEventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
-        private void bBatchRename_CheckedChanged(object sender, System.EventArgs e)
+        private void bFilename_CheckedChanged(object sender, System.EventArgs e)
         {
             gbBatchRename.Enabled = bFilename.Checked;
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void bCounter_CheckedChanged(object sender, System.EventArgs e)
@@ -1216,7 +1226,7 @@ namespace ImageRenamer
             else
                 this.gbCounter.Enabled = false;
 
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void bDateCounter_CheckedChanged(object sender, EventArgs e)
@@ -1230,7 +1240,7 @@ namespace ImageRenamer
             else
                 this.gbDateCounter.Enabled = false;
 
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
 
         }
         private void bClearFilename_CheckedChanged(object sender, System.EventArgs e)
@@ -1240,48 +1250,48 @@ namespace ImageRenamer
 
         private void bInsert_CheckedChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void bRemove_CheckedChanged(object sender, System.EventArgs e)
         {
             gbRemove.Enabled = bRemove.Checked;
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void iStart_ValueChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void iStep_ValueChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void iDigits_ValueChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void iInsert_ValueChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void iRemoveLength_ValueChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void iRemovePosition_ValueChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void bClearExtension_CheckedChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void cbChangeExtension_SelectedIndexChanged(object sender, System.EventArgs e)
@@ -1292,16 +1302,25 @@ namespace ImageRenamer
                 txtNewExtension.Visible = false;
             else
                 txtNewExtension.Visible = true;
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void txtNewExtension_TextChanged(object sender, System.EventArgs e)
         {
-            txtNewFilenamePattern_TextChanged(null, null);
+            bLivePreview_CheckedChanged(null, null);
         }
 
         private void txtNewFilenamePattern_TextChanged(object sender, System.EventArgs e)
         {
+            bLivePreview_CheckedChanged(null, null);
+        }
+
+        private void bLivePreview_CheckedChanged(object sender, EventArgs e)
+        {
+            if (bLivePreview.Checked)
+            {
+                btnPreviewOnSelection_Click(sender, e);
+            }
         }
 
         private void btnPreviewOnSelection_Click(object sender, EventArgs e)
@@ -1333,7 +1352,7 @@ namespace ImageRenamer
                 txtDateFormatForFilename.Text = DATE_FILENAMEFORMAT;
         }
 
-        private DialogResult GenerateNewFilename(ListViewItem listViewItem, int relativeBatchIndex = 0)
+        private DialogResult GenerateNewFilename(ListViewItem listViewItem, int relativeBatchIndex = 0, bool yesForAll = false)
         {
             ImageInfo imageInfo = (ImageInfo)listViewItem.Tag;
             if (!bFilename.Checked)
@@ -1400,23 +1419,15 @@ namespace ImageRenamer
                 NewFilename = NewFilename.Remove(startIndex, count);
             }
             NewFilename = NewFilename + NewExtension;
-            //bool bWillExist = false;
             List<string> ExcludedFilenames = new List<string>();
             for (int i = 0; i < absoluteItemIndex; i++)
             {
                 string name = ((ImageInfo)listView.Items[i].Tag).NewFilename.ToLower();
                 ExcludedFilenames.Add(name);
-                //if (name.ToLower() == NewFilename.ToLower())
-                //    bWillExist = true;
             }
             imageInfo.NewFilename = NewFilename;
             DialogResult uniqnessResult = imageInfo.EnsureUniqueFilename(true, ExcludedFilenames);
             return uniqnessResult;
-            //if (bWillExist || (NewFilename.ToLower() != filename.ToLower() && File.Exists(path + "\\" + NewFilename)))
-            //{
-            //    NewFilename = Utils.DeclineFilename(Path.Combine(path, NewFilename), (string[])ExcludedFilenames.ToArray()).Name;
-            //}
-            //return NewFilename;
         }
 
         private void btnSetDateFromFilename_Click(object sender, EventArgs e)
@@ -1550,7 +1561,6 @@ namespace ImageRenamer
                         ));
             return true;
         }
-
 
         private void btnAutoFixExif_Click(object sender, EventArgs e)
         {
@@ -1782,117 +1792,5 @@ namespace ImageRenamer
             listView.MinimalistView = bMinimalView.Checked;
         }
 
-        private Thread willShowPreviewThumbnail;
-
-        private ListViewItem hoveredItem;
-        private Point hoveredItemLocation;
-
-        private void listView_MouseHover(object sender, EventArgs e)
-        {
-
-        }
-
-        private void listView_MouseMove(object sender, MouseEventArgs e)
-        {
-            hoveredItemLocation = e.Location;
-            ListViewItem item = listView.GetItemAt(hoveredItemLocation.X, hoveredItemLocation.Y);
-            if (item == null)
-            {
-                hoveredItem = null;
-                previewThumbnail.Visible = false;
-                return;
-            }
-            if (hoveredItemLocation.X <= listView.Columns[MyListView.THUMBNAIL_INDEX].Width + listView.Columns[MyListView.NAME_INDEX].Width)
-            {
-                this.previewThumbnail.Location = new Point(
-                    hoveredItemLocation.X + 10 + listView.Location.X,
-                    ((hoveredItemLocation.Y + this.previewThumbnail.Size.Height > listView.Height)
-                    ? (hoveredItemLocation.Y - this.previewThumbnail.Size.Height - 10)
-                    : (hoveredItemLocation.Y + 10)) + listView.Location.Y);
-                if (item == hoveredItem) return;
-
-                hoveredItem = item;
-                ImageInfo imageInfo = (ImageInfo)hoveredItem.Tag;
-                Image img = Image.FromFile(imageInfo.FileInfo.FullName);
-                Size size;
-                if (img.Width > img.Height)
-                {
-                    this.previewThumbnail.Size = new Size(this.previewThumbnail.Size.Width, (int)((float)img.Height / ((float)img.Width / (float)this.previewThumbnail.Size.Width)));
-                }
-                else
-                {
-                    this.previewThumbnail.Size = new Size((int)((float)img.Width / ((float)img.Height / (float)this.previewThumbnail.Size.Height)), this.previewThumbnail.Size.Height);
-                }
-                this.previewThumbnail.Image = img.GetThumbnailImage(this.previewThumbnail.Size.Width, this.previewThumbnail.Size.Height, null, IntPtr.Zero);
-                this.previewThumbnail.Visible = true;
-                img.Dispose();
-                img = null;
-            }
-            else
-            {
-                previewThumbnail.Visible = false;
-                hoveredItem = null;
-            }
-            /*            ListViewItem item = base.GetItemAt(e.X, e.Y);
-                        if (item == null)
-                        {
-                            hoveredItem = null;
-                            if (willShowPreviewThumbnail != null)
-                            {
-                                willShowPreviewThumbnail.Abort();
-                                willShowPreviewThumbnail = null;
-                            }
-                            return;
-                        }
-                        if (item == hoveredItem) return;
-                        if (e.X <= Columns[THUMBNAIL_INDEX].Width + Columns[NAME_INDEX].Width)
-                        {
-                            hoveredItem = item;
-                            if (willShowPreviewThumbnail != null)
-                            {
-                                willShowPreviewThumbnail.Abort();
-                                willShowPreviewThumbnail = null;
-                            }
-                            willShowPreviewThumbnail = new Thread(new ThreadStart(() =>
-                            {
-                                Thread.Sleep(3000);
-                                ImageInfo imageInfo = (ImageInfo)hoveredItem.Tag;
-                                Image img = Image.FromFile(imageInfo.FileInfo.FullName);
-                                if (img.Width > img.Height)
-                                {
-                                    this.previewThumbnail.Image = img.GetThumbnailImage(this.previewThumbnail.Size.Width, (int)((float)img.Height / ((float)img.Width / (float)this.previewThumbnail.Size.Width)), null, IntPtr.Zero);
-                                }
-                                else
-                                {
-                                    this.previewThumbnail.Image = img.GetThumbnailImage((int)((float)img.Width / ((float)img.Height / (float)this.previewThumbnail.Size.Height)), this.previewThumbnail.Size.Height, null, IntPtr.Zero);
-                                }
-                                       //previewThumbnail.Image = ((ImageInfo)hoveredItem.Tag).ThumbImage;
-                                       this.previewThumbnail.Location = new Point(
-                                    e.X + 10,
-                                    (e.Y + this.previewThumbnail.Size.Height > this.FindForm().Height)
-                                    ? (e.Y - this.previewThumbnail.Size.Height - 10)
-                                    : (e.Y + 10));
-                                this.previewThumbnail.Visible = true;
-                                img.Dispose();
-                                img = null;
-                            }));
-                            willShowPreviewThumbnail.Start();
-                        }
-                        else
-                        {
-                            previewThumbnail.Visible = false;
-                            if (willShowPreviewThumbnail != null)
-                            {
-                                willShowPreviewThumbnail.Abort();
-                                willShowPreviewThumbnail = null;
-                            }
-                        }*/
-        }
-
-        private void listView_MouseLeave(object sender, EventArgs e)
-        {
-            previewThumbnail.Visible = false;
-            hoveredItem = null;
-        }
     }
 }

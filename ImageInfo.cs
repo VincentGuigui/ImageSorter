@@ -188,15 +188,17 @@ namespace ImageRenamer
             }
         }
 
-        public DialogResult EnsureUniqueFilename(bool inBatch, List<string> ExcludedFilenames = null)
+        public DialogResult EnsureUniqueFilename(bool inBatch, List<string> ExcludedFilenames = null, bool yesForAll = false)
         {
             if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return DialogResult.Yes;
             string newFullname = Path.Combine(FileInfo.Directory.FullName, NewFilename);
             if (File.Exists(newFullname) || (ExcludedFilenames != null && ExcludedFilenames.Contains(newFilename.ToLower())))
             {
-                DialogResult result = MessageBox.Show("File already exists. Do you want to add a counter ?", "File exists",
-                    inBatch ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes)
+                DialogResult result = DialogResult.Ignore;
+                if (!yesForAll)
+                    result = MessageBox.Show("File already exists. Do you want to add a counter ?", "File exists",
+                        inBatch ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes || result == DialogResult.Ignore)
                 {
                     NewFilename = Utils.DeclineFilename(newFullname, ExcludedFilenames).Name;
                     return result;
