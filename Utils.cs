@@ -53,16 +53,16 @@ namespace ImageRenamer
             }
         }
 
-        public static FileInfo DeclineFilename(string Filename, List<string> ExcludedFilenames = null)
+        public static FileInfo DeclineFilename(string filename, List<string> excludedFilenames = null)
         {
-            FileInfo fileInfo = new FileInfo(Filename);
+            FileInfo fileInfo = new FileInfo(filename);
             int counter = 1;
             string newFilename;
             do
             {
                 newFilename = fileInfo.Name.Substring(0, fileInfo.Name.Length - fileInfo.Extension.Length) + "_" + counter.ToString() + fileInfo.Extension;
                 counter++;
-            } while ((File.Exists(newFilename) || (ExcludedFilenames != null && ExcludedFilenames.Contains(newFilename.ToLower()))));
+            } while ((File.Exists(newFilename) || (excludedFilenames != null && excludedFilenames.Contains(newFilename.ToLower()))));
             fileInfo = new FileInfo(Path.Combine(fileInfo.Directory.FullName, newFilename));
             return fileInfo;
         }

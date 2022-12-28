@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace ImageRenamer
 {
@@ -97,6 +98,9 @@ namespace ImageRenamer
         private ColumnHeader chDate;
         private ColumnHeader chExifDate;
         public PictureBox PreviewThumbnail { get; set; }
+
+        [DefaultValue(typeof(Size), "400, 400")]
+        public Size PreviewThumbnailSize { get; set; }
         BufferedGraphics bufferedGraphics;
         [DefaultValue(true)]
         public bool AllowRowReorder { get; set; }
@@ -128,6 +132,7 @@ namespace ImageRenamer
             this.chSize.Text = headers[FILESIZE_INDEX];
             this.chDate.Text = headers[WRITEDATE_INDEX];
             this.chExifDate.Text = headers[EXIFDATE_INDEX];
+            this.PreviewThumbnailSize = new Size(400, 400);
             this.MinimalistView = true;
             //Activate double buffering
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
@@ -186,6 +191,8 @@ namespace ImageRenamer
             this.FullRowSelect = true;
             this.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MyListView_KeyDown);
+            this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MyListView_MouseClick);
+            this.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.MyListView_MouseDoubleClick);
             this.MouseLeave += new System.EventHandler(this.MyListView_MouseLeave);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MyListView_MouseMove);
             this.ResumeLayout(false);
@@ -824,7 +831,7 @@ namespace ImageRenamer
                 listViewItem = new ListViewItem(new String[] { null, null, null, null, null, null });
             Cursor.Current = Cursors.WaitCursor;
 
-            imageInfo.CreateThumbnailImage(this.thumbSize, MetaDataRequired);
+            imageInfo.LoadThumbnailAndMetadata(this.thumbSize, MetaDataRequired);
             listViewItem.SubItems[NAME_INDEX].Text = imageInfo.FileInfo.Name;
             listViewItem.SubItems[NEW_NAME_INDEX].Text = imageInfo.NewFilename;
             listViewItem.SubItems[FILESIZE_INDEX].Text = Utils.FormatFileSize(imageInfo.FileInfo.Length);
@@ -952,12 +959,6 @@ namespace ImageRenamer
         public delegate void ListItemDoubleClickEventHandler(object sender, ListItemClickEventArgs e);
         public event ListItemClickEventHandler ItemDoubleClick;
 
-        private int _latestMouseX = 0;
-        private void MyListView_MouseDown(object sender, MouseEventArgs e)
-        {
-            _latestMouseX = e.X;
-        }
-
         private ListViewItem.ListViewSubItem GetListViewSubItemFromCoordinates(int X)
         {
             int accumulated = 0;
@@ -981,7 +982,7 @@ namespace ImageRenamer
             if (this.SelectedItems.Count > 0)
             {
                 SelectedItem = this.SelectedItems[0];
-                SelectedSubItem = GetListViewSubItemFromCoordinates(_latestMouseX);
+                SelectedSubItem = GetListViewSubItemFromCoordinates(e.X);
                 if (SelectedSubItem == null)
                     SelectedSubItemIndex = -1;
                 else
@@ -1038,6 +1039,20 @@ namespace ImageRenamer
         #endregion
 
         #region EditItems
+        public List<string> GetEstimatedFilenames()
+        {
+            List<string> excludedFilenames = new List<string>();
+            foreach (ListViewItem item in this.Items)
+            {
+                if (!item.Selected)
+                {
+                    ImageInfo imageInfo = (ImageInfo)item.Tag;
+                    excludedFilenames.Add(imageInfo.NewFilename.ToLower());
+                }
+            }
+            return excludedFilenames;
+        }
+
         private void EditSelectedItems()
         {
             if (SelectedSubItemIndex == FILESIZE_INDEX) return;
@@ -1049,8 +1064,11 @@ namespace ImageRenamer
             }
 
             string prevValue = "";
+            DialogResult OKOrIgnoreForAll = DialogResult.None;
+            List<string> excludedFilenames = this.GetEstimatedFilenames();
             foreach (ListViewItem item in this.SelectedItems)
             {
+                bool otherItemsAfterThisOne = this.SelectedItems.Count > 1 && item != this.SelectedItems[this.SelectedItems.Count - 1];
                 ImageInfo imageInfo = (ImageInfo)item.Tag;
                 string value = item.SubItems[SelectedSubItemIndex].Text;
                 string nextValue = "";
@@ -1067,7 +1085,7 @@ namespace ImageRenamer
                     case EXIFDATE_INDEX: originalValue = imageInfo.ExifDate.ToString(); break;
                 }
                 FrmInputDialog frmFilenameInput = new FrmInputDialog(
-                    this.SelectedItems.Count > 1,
+                    otherItemsAfterThisOne,
                     prevValue,
                     value, originalValue,
                     nextValue,
@@ -1080,11 +1098,16 @@ namespace ImageRenamer
                 {
                     if (value != frmFilenameInput.Value)
                     {
-                        DialogResult uniqnessResult = ConvertValueForImageInfo(imageInfo, frmFilenameInput.Value);
-                        if (uniqnessResult == DialogResult.Cancel)
-                        {
+                        OKOrIgnoreForAll = ConvertValueForImageInfo(
+                            SelectedSubItemIndex,
+                            imageInfo,
+                            frmFilenameInput.Value,
+                            excludedFilenames,
+                            otherItemsAfterThisOne,
+                            OKOrIgnoreForAll);
+                        if (OKOrIgnoreForAll == DialogResult.Cancel)
                             break;
-                        }
+                        excludedFilenames.Add(imageInfo.NewFilename.ToLower());
                         if (this.AfterLabelEdit != null)
                             AfterLabelEdit(this, new LabelEditEventArgs(item.Index));
                         this.RefreshListViewItem(item);
@@ -1097,15 +1120,17 @@ namespace ImageRenamer
             }
         }
 
-        private DialogResult ConvertValueForImageInfo(ImageInfo imageInfo, string newValue, bool inBatch = false)
+        private static DialogResult ConvertValueForImageInfo(int selectedSubItemIndex, ImageInfo imageInfo, string newValue, List<string> excludedFilenames, bool inBatch, DialogResult OKOrIgnoreForAll)
         {
-            switch (SelectedSubItemIndex)
+            switch (selectedSubItemIndex)
             {
                 case NEW_NAME_INDEX:
                     imageInfo.NewFilenameLocked = false;
                     imageInfo.NewFilename = newValue;
-                    DialogResult uniqnessResult = imageInfo.EnsureUniqueFilename(inBatch, this.Items.Cast<ListViewItem>().Select(i => ((ImageInfo)i.Tag).NewFilename).ToList());
-                    if (inBatch && uniqnessResult == DialogResult.Cancel)
+                    OKOrIgnoreForAll = imageInfo.EnsureUniqueFilename(inBatch,
+                        excludedFilenames,
+                        OKOrIgnoreForAll);
+                    if (inBatch && OKOrIgnoreForAll == DialogResult.Cancel)
                         return DialogResult.Cancel;
                     imageInfo.NewFilenameLocked = imageInfo.NewFilename != imageInfo.FileInfo.Name;
                     break;
@@ -1344,9 +1369,12 @@ namespace ImageRenamer
             {
                 this.PreviewThumbnail.Location = new Point(
                     hoveredItemLocation.X + 10 + this.Location.X,
-                    ((hoveredItemLocation.Y + this.PreviewThumbnail.Size.Height > this.Height)
-                    ? (hoveredItemLocation.Y - this.PreviewThumbnail.Size.Height - 10)
-                    : (hoveredItemLocation.Y + 10)) + this.Location.Y);
+                    ((hoveredItemLocation.Y + this.PreviewThumbnail.Size.Height / 2 > this.Height)
+                    ? (this.Height - this.PreviewThumbnail.Size.Height)
+                    : (
+                        (hoveredItemLocation.Y - this.PreviewThumbnail.Size.Height / 2 < 0)
+                        ? 0 
+                        : (hoveredItemLocation.Y - this.PreviewThumbnail.Size.Height / 2))) + this.Location.Y);
                 if (item == hoveredItem) return;
                 hoveredItem = item;
 
@@ -1361,20 +1389,16 @@ namespace ImageRenamer
                     this.Invoke((MethodInvoker)delegate
                     {
                         ImageInfo imageInfo = (ImageInfo)hoveredItem.Tag;
-                        Image img = Image.FromFile(imageInfo.FileInfo.FullName);
-                        if (img.Width > img.Height)
+                        if (this.PreviewThumbnail.Image != null)
+                            this.PreviewThumbnail.Image.Dispose();
+                        this.PreviewThumbnail.Image = ImageInfo.CreateThumbnailImage(imageInfo.FileInfo, this.PreviewThumbnailSize);
+                        if (this.PreviewThumbnail.Image != null)
                         {
-                            this.PreviewThumbnail.Size = new Size(this.PreviewThumbnail.Size.Width, (int)((float)img.Height / ((float)img.Width / (float)this.PreviewThumbnail.Size.Width)));
+                            this.PreviewThumbnail.Size = this.PreviewThumbnail.Image.Size;
+                            this.PreviewThumbnail.Visible = true;
                         }
                         else
-                        {
-                            this.PreviewThumbnail.Size = new Size((int)((float)img.Width / ((float)img.Height / (float)this.PreviewThumbnail.Size.Height)), this.PreviewThumbnail.Size.Height);
-                        }
-                      
-                        this.PreviewThumbnail.Image = img.GetThumbnailImage(this.PreviewThumbnail.Size.Width, this.PreviewThumbnail.Size.Height, null, IntPtr.Zero);
-                        this.PreviewThumbnail.Visible = true;
-                        img.Dispose();
-                        img = null;
+                            this.PreviewThumbnail.Visible = false;
                     });
                 }));
                 willShowPreviewThumbnail.Start();
@@ -1389,60 +1413,6 @@ namespace ImageRenamer
                 PreviewThumbnail.Visible = false;
                 hoveredItem = null;
             }
-            /*            ListViewItem item = base.GetItemAt(e.X, e.Y);
-                        if (item == null)
-                        {
-                            hoveredItem = null;
-                            if (willShowPreviewThumbnail != null)
-                            {
-                                willShowPreviewThumbnail.Abort();
-                                willShowPreviewThumbnail = null;
-                            }
-                            return;
-                        }
-                        if (item == hoveredItem) return;
-                        if (e.X <= Columns[THUMBNAIL_INDEX].Width + Columns[NAME_INDEX].Width)
-                        {
-                            hoveredItem = item;
-                            if (willShowPreviewThumbnail != null)
-                            {
-                                willShowPreviewThumbnail.Abort();
-                                willShowPreviewThumbnail = null;
-                            }
-                            willShowPreviewThumbnail = new Thread(new ThreadStart(() =>
-                            {
-                                Thread.Sleep(3000);
-                                ImageInfo imageInfo = (ImageInfo)hoveredItem.Tag;
-                                Image img = Image.FromFile(imageInfo.FileInfo.FullName);
-                                if (img.Width > img.Height)
-                                {
-                                    this.previewThumbnail.Image = img.GetThumbnailImage(this.previewThumbnail.Size.Width, (int)((float)img.Height / ((float)img.Width / (float)this.previewThumbnail.Size.Width)), null, IntPtr.Zero);
-                                }
-                                else
-                                {
-                                    this.previewThumbnail.Image = img.GetThumbnailImage((int)((float)img.Width / ((float)img.Height / (float)this.previewThumbnail.Size.Height)), this.previewThumbnail.Size.Height, null, IntPtr.Zero);
-                                }
-                                       //previewThumbnail.Image = ((ImageInfo)hoveredItem.Tag).ThumbImage;
-                                       this.previewThumbnail.Location = new Point(
-                                    e.X + 10,
-                                    (e.Y + this.previewThumbnail.Size.Height > this.FindForm().Height)
-                                    ? (e.Y - this.previewThumbnail.Size.Height - 10)
-                                    : (e.Y + 10));
-                                this.previewThumbnail.Visible = true;
-                                img.Dispose();
-                                img = null;
-                            }));
-                            willShowPreviewThumbnail.Start();
-                        }
-                        else
-                        {
-                            previewThumbnail.Visible = false;
-                            if (willShowPreviewThumbnail != null)
-                            {
-                                willShowPreviewThumbnail.Abort();
-                                willShowPreviewThumbnail = null;
-                            }
-                        }*/
         }
 
         private void MyListView_MouseLeave(object sender, EventArgs e)

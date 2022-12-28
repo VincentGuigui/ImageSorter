@@ -1326,14 +1326,17 @@ namespace ImageRenamer
         private void btnPreviewOnSelection_Click(object sender, EventArgs e)
         {
             int relativeBatchIndex = 0;
+            List<string> excludedFilenames = listView.GetEstimatedFilenames();
+            DialogResult OKOrIgnoreForAll = DialogResult.None;
             listView.ForEachItems((listViewItem, imageInfo) =>
             {
-                DialogResult result = GenerateNewFilename(listViewItem, relativeBatchIndex);
-                if (result == DialogResult.Cancel)
-                    return result;
+                OKOrIgnoreForAll = GenerateNewFilename(listViewItem, excludedFilenames, relativeBatchIndex, OKOrIgnoreForAll);
+                excludedFilenames.Add(((ImageInfo)listViewItem.Tag).NewFilename.ToLower());
+                if (OKOrIgnoreForAll == DialogResult.Cancel)
+                    return OKOrIgnoreForAll;
                 listView.RefreshListViewItem(listViewItem);
                 relativeBatchIndex++;
-                return DialogResult.OK;
+                return OKOrIgnoreForAll;
             });
         }
 
@@ -1352,7 +1355,7 @@ namespace ImageRenamer
                 txtDateFormatForFilename.Text = DATE_FILENAMEFORMAT;
         }
 
-        private DialogResult GenerateNewFilename(ListViewItem listViewItem, int relativeBatchIndex = 0, bool yesForAll = false)
+        private DialogResult GenerateNewFilename(ListViewItem listViewItem, List<string> excludedFilenames, int relativeBatchIndex = 0, DialogResult OKOrIgnoreForAll = DialogResult.None)
         {
             ImageInfo imageInfo = (ImageInfo)listViewItem.Tag;
             if (!bFilename.Checked)
@@ -1419,15 +1422,9 @@ namespace ImageRenamer
                 NewFilename = NewFilename.Remove(startIndex, count);
             }
             NewFilename = NewFilename + NewExtension;
-            List<string> ExcludedFilenames = new List<string>();
-            for (int i = 0; i < absoluteItemIndex; i++)
-            {
-                string name = ((ImageInfo)listView.Items[i].Tag).NewFilename.ToLower();
-                ExcludedFilenames.Add(name);
-            }
             imageInfo.NewFilename = NewFilename;
-            DialogResult uniqnessResult = imageInfo.EnsureUniqueFilename(true, ExcludedFilenames);
-            return uniqnessResult;
+            return imageInfo.EnsureUniqueFilename(true, excludedFilenames, OKOrIgnoreForAll);
+            
         }
 
         private void btnSetDateFromFilename_Click(object sender, EventArgs e)

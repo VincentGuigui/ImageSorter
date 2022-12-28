@@ -78,48 +78,64 @@ namespace ImageRenamer
             this.NewExifDate = ExifDate;
         }
 
-        public void CreateThumbnailImage(int ThumbSize, bool MetaDataRequired)
+
+        public static Image CreateThumbnailImage(FileInfo fileInfo, Size thumbSize)
+        {
+            Image img;
+            Image thumbImage = CreateThumbnailImage(fileInfo, thumbSize, out img);
+            if (img != null)
+                img.Dispose();
+            return thumbImage;
+        }
+
+        public static Image CreateThumbnailImage(FileInfo fileInfo, Size thumbSize, out Image img)
+        {
+            if (IMAGE_EXTS.Contains(fileInfo.Extension.ToUpper()))
+            {
+                try
+                {
+                    img = Image.FromFile(fileInfo.FullName);
+                    if (img.Width > img.Height)
+                    {
+                        return img.GetThumbnailImage(
+                            thumbSize.Width, 
+                            (int)((float)img.Height / ((float)img.Width / (float)thumbSize.Width)), 
+                            null, IntPtr.Zero);
+                    }
+                    else
+                    {
+                        return img.GetThumbnailImage(
+                            (int)((float)img.Width / ((float)img.Height / (float)thumbSize.Height)), 
+                            thumbSize.Height, 
+                            null, IntPtr.Zero);
+                    }
+                }
+                catch
+                {
+                }
+            }
+            img = null;
+            return null;
+        }
+
+        public void LoadThumbnailAndMetadata(int ThumbSize, bool MetaDataRequired)
         {
             ExifDate = DateTime.MinValue;
             Image img = null;
-            Image thumbImage = null;
-            if ((ThumbSize > 0 && (this.ThumbImage == null || this.ThumbSize != ThumbSize))
-                || (MetaDataRequired && this.MetaData == null))
+            if (ThumbSize > 0 && (this.ThumbImage == null || this.ThumbSize != ThumbSize))
             {
-                if (IMAGE_EXTS.Contains(FileInfo.Extension.ToUpper()))
-                {
-                    try
-                    {
-                        img = Image.FromFile(this.FileInfo.FullName);
-                        if (ThumbSize > 0)
-                        {
-                            if (img.Width > img.Height)
-                            {
-                                thumbImage = img.GetThumbnailImage(ThumbSize, (int)((float)img.Height / ((float)img.Width / (float)ThumbSize)), null, IntPtr.Zero);
-                            }
-                            else
-                            {
-                                thumbImage = img.GetThumbnailImage((int)((float)img.Width / ((float)img.Height / (float)ThumbSize)), ThumbSize, null, IntPtr.Zero);
-                            }
-                        }
-                        this.ThumbImage = thumbImage;
-                        this.ThumbSize = ThumbSize;
-                    }
-                    catch
-                    {
-                    }
-
-                }
+                this.ThumbImage = CreateThumbnailImage(this.FileInfo, new Size(this.ThumbSize, this.ThumbSize), out img);
             }
             if (MetaDataRequired && MetaData != null)
             {
+                if (img== null)
+                    img = Image.FromFile(this.FileInfo.FullName);
                 ExifDate = GetExifDate();
                 if (NewExifDate == DateTime.MinValue)
                     NewExifDate = ExifDate;
             }
             if (img != null)
                 img.Dispose();
-            img = null;
         }
 
         public bool HasMissingExifDate()
@@ -188,47 +204,54 @@ namespace ImageRenamer
             }
         }
 
-        public DialogResult EnsureUniqueFilename(bool inBatch, List<string> ExcludedFilenames = null, bool yesForAll = false)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inBatch"></param>
+        /// <param name="excludedFilenames"></param>
+        /// <param name="batchOKOrIgnoreForAll"></param>
+        /// <returns>
+        /// Yes to confirm uniqueness for this one only
+        /// OK if the user has confirmed uniqueness by adding a counter for this one and the following
+        /// Ignore if the user wanted to prevent adding a uniqueness counter for this one and the following
+        /// Cancel if the user cancelled the process</returns>
+        public DialogResult EnsureUniqueFilename(bool inBatch, List<string> excludedFilenames = null, DialogResult OKOrIgnoreForAll = DialogResult.None)
         {
-            if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return DialogResult.Yes;
+            DialogResult result = OKOrIgnoreForAll;
+            if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return result;
             string newFullname = Path.Combine(FileInfo.Directory.FullName, NewFilename);
-            if (File.Exists(newFullname) || (ExcludedFilenames != null && ExcludedFilenames.Contains(newFilename.ToLower())))
+            if (File.Exists(newFullname) || (excludedFilenames != null && excludedFilenames.Contains(newFilename.ToLower())))
             {
-                DialogResult result = DialogResult.Ignore;
-                if (!yesForAll)
-                    result = MessageBox.Show("File already exists. Do you want to add a counter ?", "File exists",
-                        inBatch ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes || result == DialogResult.Ignore)
+                if (result == DialogResult.None)
                 {
-                    NewFilename = Utils.DeclineFilename(newFullname, ExcludedFilenames).Name;
-                    return result;
+                    result = MessageBox.Show("File \"" + NewFilename + "\" already exists.\nDo you want to add a counter at the end of tbe name ?", "File exists",
+                         inBatch ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.YesNo);
+                    if (result == DialogResult.Yes && inBatch)
+                    {
+                        DialogResult resultForAll = MessageBox.Show("Do you want a counter for all the following items ?", "Apply to all ?",
+                            MessageBoxButtons.YesNo);
+                        if (resultForAll == DialogResult.Yes) result = DialogResult.OK;
+                    }
+                    else if (result == DialogResult.No && inBatch)
+                    {
+                        DialogResult resultForAll = MessageBox.Show("Do you want to ignore possible reused name for all the following items ?", "Apply to all ?", MessageBoxButtons.YesNo);
+                        if (resultForAll == DialogResult.Yes) result = DialogResult.Ignore;
+                    }
                 }
-                return result;
+                if (result == DialogResult.Yes || result == DialogResult.OK)
+                {
+                    NewFilename = Utils.DeclineFilename(newFullname, excludedFilenames).Name;
+                }
             }
-            return DialogResult.Yes;
+            return result;
         }
 
         public bool ApplyNewFilename()
         {
-            //if (NewFilename.ToLower() == FileInfo.Name.ToLower()) return false;
-            //FileInfo newFileInfo = new FileInfo(Path.Combine(FileInfo.Directory.FullName, NewFilename));
-            //if (newFileInfo.Exists)
-            //{
-            //    if (MessageBox.Show("File already exists. Do you want to add a counter ?", "File exists", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            //    {
-            //        newFileInfo = Utils.DeclineFilename(newFileInfo.FullName, new ArrayList());
-            //    }
-            //    else
-            //    {
-            //        return false;
-            //    }
-            //}
             if (Utils.Rename(FileInfo, NewFilename))
             {
-
                 NewFilenameLocked = false;
                 FileInfo = new FileInfo(Path.Combine(FileInfo.Directory.FullName, NewFilename));
-                //FileInfo = newFileInfo;
                 return true;
             }
             else
