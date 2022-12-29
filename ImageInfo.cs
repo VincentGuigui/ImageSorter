@@ -8,6 +8,7 @@ using System.Collections;
 using System.Text;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Drawing.Drawing2D;
 
 namespace ImageRenamer
 {
@@ -55,7 +56,7 @@ namespace ImageRenamer
             }
         }
         public Image ThumbImage = null;
-        public int ThumbSize = 0;
+        private int currentThumbSize = 32;
         public System.Drawing.Imaging.PropertyItem[] MetaData = null;
         public ImageInfo()
         {
@@ -79,60 +80,88 @@ namespace ImageRenamer
         }
 
 
-        public static Image CreateThumbnailImage(FileInfo fileInfo, Size thumbSize)
+        public static Image CreateThumbnailImage(FileInfo fileInfo, Size thumbSize, bool fitInside)
         {
             Image img;
-            Image thumbImage = CreateThumbnailImage(fileInfo, thumbSize, out img);
+            Image thumbImage = CreateThumbnailImage(fileInfo, thumbSize, fitInside, out img);
             if (img != null)
                 img.Dispose();
             return thumbImage;
         }
 
-        public static Image CreateThumbnailImage(FileInfo fileInfo, Size thumbSize, out Image img)
+        public static Image CreateThumbnailImage(FileInfo fileInfo, Size thumbSize, bool fitInside, out Image img)
         {
-            if (IMAGE_EXTS.Contains(fileInfo.Extension.ToUpper()))
+            if (!IMAGE_EXTS.Contains(fileInfo.Extension.ToUpper()))
+            {
+                img = null;
+                return System.Drawing.Icon.ExtractAssociatedIcon(fileInfo.FullName).ToBitmap();
+            }
+            else
             {
                 try
                 {
                     img = Image.FromFile(fileInfo.FullName);
-                    if (img.Width > img.Height)
-                    {
-                        return img.GetThumbnailImage(
-                            thumbSize.Width, 
-                            (int)((float)img.Height / ((float)img.Width / (float)thumbSize.Width)), 
-                            null, IntPtr.Zero);
-                    }
+                    Size newSize;
+                    newSize = (img.Width > img.Height)
+                    ? new Size(thumbSize.Width,
+                        (int)((float)img.Height / ((float)img.Width / (float)thumbSize.Width)))
+                    : new Size((int)((float)img.Width / ((float)img.Height / (float)thumbSize.Height)),
+                        thumbSize.Height);
+
+                    Image tmpImage = null;
+                    if (thumbSize.Width <= 16)
+                        tmpImage = System.Drawing.Icon.ExtractAssociatedIcon(fileInfo.FullName).ToBitmap();
+                    else if (newSize.Width < 240)
+                        tmpImage = img.GetThumbnailImage(newSize.Width, newSize.Height, null, IntPtr.Zero);
                     else
+                        tmpImage = img;
+                    Image thumbnailImage = null;
+                    if (fitInside)
+                        thumbnailImage = new Bitmap(thumbSize.Width, thumbSize.Height);
+                    else
+                        thumbnailImage = new Bitmap(newSize.Width, newSize.Height);
+
+                    using (Graphics graphics = Graphics.FromImage(thumbnailImage))
                     {
-                        return img.GetThumbnailImage(
-                            (int)((float)img.Width / ((float)img.Height / (float)thumbSize.Height)), 
-                            thumbSize.Height, 
-                            null, IntPtr.Zero);
+                        graphics.CompositingQuality = CompositingQuality.HighSpeed;
+                        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        graphics.CompositingMode = CompositingMode.SourceCopy;
+                        graphics.DrawImage(tmpImage,
+                            (thumbnailImage.Width - newSize.Width) / 2,
+                            (thumbnailImage.Height - newSize.Height) / 2,
+                            newSize.Width, newSize.Height);
                     }
+                    return thumbnailImage;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                 }
             }
             img = null;
             return null;
         }
 
-        public void LoadThumbnailAndMetadata(int ThumbSize, bool MetaDataRequired)
+        public void LoadThumbnailAndMetadata(int thumbSize, bool metaDataRequired)
         {
             ExifDate = DateTime.MinValue;
             Image img = null;
-            if (ThumbSize > 0 && (this.ThumbImage == null || this.ThumbSize != ThumbSize))
+            if (this.ThumbImage == null || this.currentThumbSize != thumbSize)
             {
-                this.ThumbImage = CreateThumbnailImage(this.FileInfo, new Size(this.ThumbSize, this.ThumbSize), out img);
+                this.ThumbImage = CreateThumbnailImage(this.FileInfo, new Size(thumbSize, thumbSize), true, out img);
+                this.currentThumbSize = thumbSize;
             }
-            if (MetaDataRequired && MetaData != null)
+            if (metaDataRequired)
             {
-                if (img== null)
-                    img = Image.FromFile(this.FileInfo.FullName);
-                ExifDate = GetExifDate();
-                if (NewExifDate == DateTime.MinValue)
-                    NewExifDate = ExifDate;
+                if (MetaData == null)
+                {
+                    if (img == null)
+                        img = Image.FromFile(this.FileInfo.FullName);
+                    MetaData = img.PropertyItems;
+                    ExifDate = GetExifDate();
+                    if (NewExifDate == DateTime.MinValue)
+                        NewExifDate = ExifDate;
+                }
             }
             if (img != null)
                 img.Dispose();

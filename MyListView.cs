@@ -74,7 +74,7 @@ namespace ImageRenamer
             get; set;
         }
         public int DropIndex = -1;
-        private int thumbSize = 0;
+        private int thumbSize = 16;
         public int ThumbSize
         {
             get
@@ -85,7 +85,11 @@ namespace ImageRenamer
             {
                 thumbSize = value;
                 chThumb.Width = value;
-                this.Redraw();
+                this.SmallImageList.ImageSize = new Size(thumbSize, thumbSize);
+                this.SuspendLayout();
+                this.View = View.LargeIcon;
+                this.View = View.Details;
+                this.ResumeLayout();
             }
         }
         public bool MetaDataRequired = false;
@@ -117,6 +121,8 @@ namespace ImageRenamer
         }
         private ListViewItem SelectedItem;
         private ListViewItem.ListViewSubItem SelectedSubItem;
+        private ImageList thumbnailImageList;
+        private IContainer components;
         private int SelectedSubItemIndex;
 
         public MyListView() : base()
@@ -143,12 +149,14 @@ namespace ImageRenamer
         #region Code généré par le Concepteur Windows Form
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.chThumb = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chFilename = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chNewFilename = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chExifDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.thumbnailImageList = new System.Windows.Forms.ImageList(this.components);
             this.SuspendLayout();
             // 
             // chThumb
@@ -178,6 +186,12 @@ namespace ImageRenamer
             this.chExifDate.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.chExifDate.Width = 120;
             // 
+            // thumbnailImageList
+            // 
+            this.thumbnailImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+            this.thumbnailImageList.ImageSize = new System.Drawing.Size(16, 16);
+            this.thumbnailImageList.TransparentColor = System.Drawing.Color.Transparent;
+            // 
             // MyListView
             // 
             this.AllowDrop = true;
@@ -189,7 +203,10 @@ namespace ImageRenamer
             this.chDate,
             this.chExifDate});
             this.FullRowSelect = true;
+            this.SmallImageList = this.thumbnailImageList;
             this.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this.TileSize = new System.Drawing.Size(100, 100);
+            this.View = System.Windows.Forms.View.Details;
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MyListView_KeyDown);
             this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MyListView_MouseClick);
             this.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.MyListView_MouseDoubleClick);
@@ -479,6 +496,11 @@ namespace ImageRenamer
                         }
                     }
                     this.InsertItems(files, DropIndex);
+                    if (this.View == View.SmallIcon)
+                    {
+                        this.View = View.LargeIcon;
+                        this.View = View.Details;
+                    }
                 }
             }
             if (dragToItem != null)
@@ -496,8 +518,8 @@ namespace ImageRenamer
         #endregion
 
         #region Custom Draw
+        /*  
         #region Structures
-
         [StructLayout(LayoutKind.Sequential)]
         private struct NMHDR
         {
@@ -575,8 +597,9 @@ namespace ImageRenamer
 
         public const int LVS_OWNERDRAWFIXED = 0x0400;
         private bool isInWmPaintMsg = false;
+        public event MeasureItemEventHandler MeasureItem;
 
-        protected override void WndProc(ref System.Windows.Forms.Message m)
+        protected override void WndProc2(ref System.Windows.Forms.Message m)
         {
             base.WndProc(ref m);
 
@@ -686,110 +709,109 @@ namespace ImageRenamer
         }
 
         //public new event DrawItemEventHandler DrawItem;
-        public new event LabelEditEventHandler AfterLabelEdit;
-        public event MeasureItemEventHandler MeasureItem;
-
-        protected override CreateParams CreateParams
-        {
-            get
-            {
-                CreateParams cp = base.CreateParams;
-                cp.Style |= LVS_OWNERDRAWFIXED;
-                return cp;
-            }
-        }
-        protected virtual void MyOnDrawItem(System.Windows.Forms.DrawListViewItemEventArgs e)
-        {
-            Graphics graphics = bufferedGraphics.Graphics;
-            this.SuspendLayout();
-            //this.BeginUpdate();
-            ListViewItem listViewItem = this.Items[e.Item.Index];
-            // Select the appropriate brush depending on if the item is selected.
-            graphics.FillRectangle(new SolidBrush(listViewItem.BackColor), new Rectangle(e.Bounds.X, e.Bounds.Y, this.Bounds.Width, e.Bounds.Height));
-
-            if (listViewItem.Selected)//.(State & DrawItemState.Selected) == DrawItemState.Selected)
-            {
-                graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
-            }
-            else
-            {
-                graphics.FillRectangle(new SolidBrush(e.Item.BackColor), e.Bounds);
-            }
-            if (DropIndex == e.Item.Index)
-            {
-                graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y - 1, e.Bounds.Width, 3);
-            }
-            else if (DropIndex == e.Item.Index + 1)
-            {
-                graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y + e.Bounds.Height - 1, e.Bounds.Width, 3);
-            }
-            ImageInfo imageInfo = (ImageInfo)listViewItem.Tag;
-            if (imageInfo.ThumbImage != null && this.thumbSize != 0)
-                graphics.DrawImage(imageInfo.ThumbImage,
-                     new RectangleF(e.Bounds.X + e.Bounds.Height / 2 - imageInfo.ThumbImage.Width / 2,
-                         e.Bounds.Y + e.Bounds.Height / 2 - imageInfo.ThumbImage.Height / 2,
-                         imageInfo.ThumbImage.Width,
-                         imageInfo.ThumbImage.Height));
-            else
-            {
-                Icon icon = System.Drawing.Icon.ExtractAssociatedIcon(imageInfo.FileInfo.FullName);
-                using (Bitmap bmp = icon.ToBitmap())
+        
+              protected override CreateParams CreateParams
                 {
-                    graphics.DrawImage(bmp,
-                         e.Bounds.X,
-                         e.Bounds.Y,
-                         e.Bounds.Height,
-                         e.Bounds.Height
-                         );
-                }
-            }
-            int colWidth = 0;
-            int i = 0;
-
-            foreach (ListViewItem.ListViewSubItem subItem in listViewItem.SubItems)
-            {
-                if (i == THUMBNAIL_INDEX)
-                {
-                    this.Columns[THUMBNAIL_INDEX].Width = ThumbSize == 0 ? e.Bounds.Height : ThumbSize;
-                }
-                if (this.Columns[i].Width > 0)
-                {
-                    if (listViewItem.Selected && subItem.ForeColor == SystemColors.WindowText)
-                        subItem.ForeColor = SystemColors.HighlightText;
-                    if (!listViewItem.Selected && subItem.ForeColor == SystemColors.HighlightText)
-                        subItem.ForeColor = SystemColors.WindowText;
-                    String text = subItem.Text;
-                    while ((int)e.Graphics.MeasureString(text, subItem.Font).Width > this.Columns[i].Width && text.Length > 6)
+                    get
                     {
-                        text = text.Substring(0, text.Length - 6) + "...";
+                        CreateParams cp = base.CreateParams;
+                        cp.Style |= LVS_OWNERDRAWFIXED;
+                        return cp;
                     }
-                    graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor),
-                        e.Bounds.X + colWidth, (int)(e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2));
-                    colWidth += this.Columns[i].Width;
                 }
-                i++;
-            }
-            if (this.Items[e.Item.Index].Focused)
-            {
-                System.Drawing.Drawing2D.HatchBrush b = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.DottedGrid, SystemColors.Highlight, Color.FromArgb((byte)~SystemColors.Highlight.R, (byte)~SystemColors.Highlight.G, (byte)~SystemColors.Highlight.B));
-                graphics.DrawRectangle(new Pen(b), e.Bounds.X, e.Bounds.Y, e.Bounds.Width - 1, e.Bounds.Height - 1);
-            }
-            bufferedGraphics.Render(e.Graphics);
-            this.ResumeLayout();
-        }
+                protected virtual void MyOnDrawItem(System.Windows.Forms.DrawListViewItemEventArgs e)
+                {
+                    Graphics graphics = bufferedGraphics.Graphics;
+                    this.SuspendLayout();
+                    //this.BeginUpdate();
+                    ListViewItem listViewItem = this.Items[e.Item.Index];
+                    // Select the appropriate brush depending on if the item is selected.
+                    graphics.FillRectangle(new SolidBrush(listViewItem.BackColor), new Rectangle(e.Bounds.X, e.Bounds.Y, this.Bounds.Width, e.Bounds.Height));
 
-        public virtual void OnMeasureItem(MeasureItemEventArgs e)
-        {
-            if (this.MeasureItem != null)
-            {
-                this.MeasureItem(this, e);
-            }
-            else
-            {
-                e.ItemHeight = Math.Max(this.thumbSize, 16);
-                e.ItemWidth = Math.Max(this.thumbSize, 16);
-            }
-        }
+                    if (listViewItem.Selected)//.(State & DrawItemState.Selected) == DrawItemState.Selected)
+                    {
+                        graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
+                    }
+                    else
+                    {
+                        graphics.FillRectangle(new SolidBrush(e.Item.BackColor), e.Bounds);
+                    }
+                    if (DropIndex == e.Item.Index)
+                    {
+                        graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y - 1, e.Bounds.Width, 3);
+                    }
+                    else if (DropIndex == e.Item.Index + 1)
+                    {
+                        graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds.X, e.Bounds.Y + e.Bounds.Height - 1, e.Bounds.Width, 3);
+                    }
+                    ImageInfo imageInfo = (ImageInfo)listViewItem.Tag;
+                    if (imageInfo.ThumbImage != null && this.thumbSize != 0)
+                        graphics.DrawImage(imageInfo.ThumbImage,
+                             new RectangleF(e.Bounds.X + e.Bounds.Height / 2 - imageInfo.ThumbImage.Width / 2,
+                                 e.Bounds.Y + e.Bounds.Height / 2 - imageInfo.ThumbImage.Height / 2,
+                                 imageInfo.ThumbImage.Width,
+                                 imageInfo.ThumbImage.Height));
+                    else
+                    {
+                        Icon icon = System.Drawing.Icon.ExtractAssociatedIcon(imageInfo.FileInfo.FullName);
+                        using (Bitmap bmp = icon.ToBitmap())
+                        {
+                            graphics.DrawImage(bmp,
+                                 e.Bounds.X,
+                                 e.Bounds.Y,
+                                 e.Bounds.Height,
+                                 e.Bounds.Height
+                                 );
+                        }
+                    }
+                    int colWidth = 0;
+                    int i = 0;
+
+                    foreach (ListViewItem.ListViewSubItem subItem in listViewItem.SubItems)
+                    {
+                        if (i == THUMBNAIL_INDEX)
+                        {
+                            this.Columns[THUMBNAIL_INDEX].Width = ThumbSize == 0 ? e.Bounds.Height : ThumbSize;
+                        }
+                        if (this.Columns[i].Width > 0)
+                        {
+                            if (listViewItem.Selected && subItem.ForeColor == SystemColors.WindowText)
+                                subItem.ForeColor = SystemColors.HighlightText;
+                            if (!listViewItem.Selected && subItem.ForeColor == SystemColors.HighlightText)
+                                subItem.ForeColor = SystemColors.WindowText;
+                            String text = subItem.Text;
+                            while ((int)e.Graphics.MeasureString(text, subItem.Font).Width > this.Columns[i].Width && text.Length > 6)
+                            {
+                                text = text.Substring(0, text.Length - 6) + "...";
+                            }
+                            graphics.DrawString(text, subItem.Font, new SolidBrush(subItem.ForeColor),
+                                e.Bounds.X + colWidth, (int)(e.Bounds.Y + e.Bounds.Height / 2 - subItem.Font.GetHeight() / 2));
+                            colWidth += this.Columns[i].Width;
+                        }
+                        i++;
+                    }
+                    if (this.Items[e.Item.Index].Focused)
+                    {
+                        System.Drawing.Drawing2D.HatchBrush b = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.DottedGrid, SystemColors.Highlight, Color.FromArgb((byte)~SystemColors.Highlight.R, (byte)~SystemColors.Highlight.G, (byte)~SystemColors.Highlight.B));
+                        graphics.DrawRectangle(new Pen(b), e.Bounds.X, e.Bounds.Y, e.Bounds.Width - 1, e.Bounds.Height - 1);
+                    }
+                    bufferedGraphics.Render(e.Graphics);
+                    this.ResumeLayout();
+                }
+
+                public virtual void OnMeasureItem(MeasureItemEventArgs e)
+                {
+                    if (this.MeasureItem != null)
+                    {
+                        this.MeasureItem(this, e);
+                    }
+                    else
+                    {
+                        e.ItemHeight = Math.Max(this.thumbSize, 16);
+                        e.ItemWidth = Math.Max(this.thumbSize, 16);
+                    }
+                }
+        */
         #endregion
 
         #region FillListViewItem
@@ -813,7 +835,6 @@ namespace ImageRenamer
             this.ResumeLayout();
             this.ProgressBar.Value = 0;
         }
-
         private ListViewItem FillListViewItem(FileInfo fileInfo)
         {
             return FillListViewItem(null, new ImageInfo(fileInfo)); ;
@@ -822,7 +843,6 @@ namespace ImageRenamer
         public ListViewItem RefreshListViewItem(ListViewItem listViewItem)
         {
             return FillListViewItem(listViewItem, (ImageInfo)listViewItem.Tag);
-
         }
 
         private ListViewItem FillListViewItem(ListViewItem listViewItem, ImageInfo imageInfo)
@@ -830,8 +850,9 @@ namespace ImageRenamer
             if (listViewItem == null)
                 listViewItem = new ListViewItem(new String[] { null, null, null, null, null, null });
             Cursor.Current = Cursors.WaitCursor;
-
             imageInfo.LoadThumbnailAndMetadata(this.thumbSize, MetaDataRequired);
+            thumbnailImageList.Images.Add(imageInfo.FileInfo.FullName, imageInfo.ThumbImage);
+            listViewItem.ImageKey = imageInfo.FileInfo.FullName;
             listViewItem.SubItems[NAME_INDEX].Text = imageInfo.FileInfo.Name;
             listViewItem.SubItems[NEW_NAME_INDEX].Text = imageInfo.NewFilename;
             listViewItem.SubItems[FILESIZE_INDEX].Text = Utils.FormatFileSize(imageInfo.FileInfo.Length);
@@ -1039,6 +1060,8 @@ namespace ImageRenamer
         #endregion
 
         #region EditItems
+        public new event LabelEditEventHandler AfterLabelEdit;
+
         public List<string> GetEstimatedFilenames()
         {
             List<string> excludedFilenames = new List<string>();
@@ -1158,27 +1181,12 @@ namespace ImageRenamer
             RefreshListViewItem(item);
         }
 
-        public void ApplyChange(ListViewItem item)
-        {
-            switch (SelectedSubItemIndex)
-            {
-                case NEW_NAME_INDEX:
-                    ApplyNewFilename(item);
-                    break;
-                case WRITEDATE_INDEX:
-                    ApplyNewWriteDate(item);
-                    break;
-                case EXIFDATE_INDEX:
-                    ApplyNewExifDate(item);
-                    break;
-                default:
-                    break;
-            }
-        }
-
         public bool ApplyNewFilename(ListViewItem item)
         {
             ImageInfo imageInfo = (ImageInfo)item.Tag;
+            int imgIndex = this.thumbnailImageList.Images.IndexOfKey(imageInfo.FileInfo.FullName);
+            //if (imgIndex != -1)
+            //    this.thumbnailImageList.Images.RemoveAt(imgIndex);
             if (imageInfo.ApplyNewFilename())
             {
                 RefreshListViewItem(item);
@@ -1279,24 +1287,33 @@ namespace ImageRenamer
             }
         }
 
-        public void Redraw()
-        {
-            this.SuspendLayout();
-            this.Height = this.Height + 1;
-            this.Height = this.Height - 1;
-            base.Refresh();
-            this.ResumeLayout();
-        }
+        //public void Redraw()
+        //{
+        //    this.SuspendLayout();
+        //    this.Height = this.Height + 1;
+        //    this.Height = this.Height - 1;
+        //    base.Refresh();
+        //    this.ResumeLayout();
+        //}
 
         public void LoadFolder(string path)
         {
             if (Directory.Exists(path))
             {
                 this.Items.Clear();
-                this.Refresh();
+                foreach (Image img in thumbnailImageList.Images)
+                {
+                    if (img != null)
+                        img.Dispose();
+                }
+                this.thumbnailImageList.Images.Clear();
                 String[] files = Directory.GetFiles(path, "*.*");
-
                 this.AddItems(files);
+                if (this.View == View.SmallIcon)
+                {
+                    this.View = View.LargeIcon;
+                    this.View = View.Details;
+                }
             }
         }
 
@@ -1368,12 +1385,12 @@ namespace ImageRenamer
             if (hoveredItemLocation.X <= this.Columns[THUMBNAIL_INDEX].Width + this.Columns[NAME_INDEX].Width)
             {
                 this.PreviewThumbnail.Location = new Point(
-                    hoveredItemLocation.X + 10 + this.Location.X,
+                    hoveredItemLocation.X + 30 + this.Location.X,
                     ((hoveredItemLocation.Y + this.PreviewThumbnail.Size.Height / 2 > this.Height)
                     ? (this.Height - this.PreviewThumbnail.Size.Height)
                     : (
                         (hoveredItemLocation.Y - this.PreviewThumbnail.Size.Height / 2 < 0)
-                        ? 0 
+                        ? 0
                         : (hoveredItemLocation.Y - this.PreviewThumbnail.Size.Height / 2))) + this.Location.Y);
                 if (item == hoveredItem) return;
                 hoveredItem = item;
@@ -1388,17 +1405,19 @@ namespace ImageRenamer
                     Thread.Sleep(this.PreviewThumbnail.Image != null ? 0 : 2000);
                     this.Invoke((MethodInvoker)delegate
                     {
+                        this.PreviewThumbnail.SuspendLayout();
                         ImageInfo imageInfo = (ImageInfo)hoveredItem.Tag;
                         if (this.PreviewThumbnail.Image != null)
                             this.PreviewThumbnail.Image.Dispose();
-                        this.PreviewThumbnail.Image = ImageInfo.CreateThumbnailImage(imageInfo.FileInfo, this.PreviewThumbnailSize);
+                        this.PreviewThumbnail.Image = ImageInfo.CreateThumbnailImage(imageInfo.FileInfo, this.PreviewThumbnailSize, false);
                         if (this.PreviewThumbnail.Image != null)
                         {
-                            this.PreviewThumbnail.Size = this.PreviewThumbnail.Image.Size;
+                            this.PreviewThumbnail.Size = new Size(this.PreviewThumbnail.Image.Size.Width, this.PreviewThumbnail.Image.Size.Height);
                             this.PreviewThumbnail.Visible = true;
                         }
                         else
                             this.PreviewThumbnail.Visible = false;
+                        this.PreviewThumbnail.ResumeLayout();
                     });
                 }));
                 willShowPreviewThumbnail.Start();
