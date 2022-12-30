@@ -265,7 +265,7 @@ namespace ImageRenamer
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbThumbSize.LargeChange = 64;
             this.tbThumbSize.Location = new System.Drawing.Point(8, 16);
-            this.tbThumbSize.Maximum = 416;
+            this.tbThumbSize.Maximum = 256;
             this.tbThumbSize.Minimum = 16;
             this.tbThumbSize.Name = "tbThumbSize";
             this.tbThumbSize.Size = new System.Drawing.Size(120, 45);
@@ -687,7 +687,7 @@ namespace ImageRenamer
             this.bLoadMetaData.Name = "bLoadMetaData";
             this.bLoadMetaData.Size = new System.Drawing.Size(102, 24);
             this.bLoadMetaData.TabIndex = 12;
-            this.bLoadMetaData.Text = "Load MetaData";
+            this.bLoadMetaData.Text = "Load Exif Date";
             this.bLoadMetaData.CheckedChanged += new System.EventHandler(this.bLoadMetaData_CheckedChanged);
             // 
             // bLoadThumbnail

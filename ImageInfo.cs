@@ -102,19 +102,25 @@ namespace ImageRenamer
                 {
                     img = Image.FromFile(fileInfo.FullName);
                     Size newSize;
-                    newSize = (img.Width > img.Height)
-                    ? new Size(thumbSize.Width,
-                        (int)((float)img.Height / ((float)img.Width / (float)thumbSize.Width)))
-                    : new Size((int)((float)img.Width / ((float)img.Height / (float)thumbSize.Height)),
-                        thumbSize.Height);
 
                     Image tmpImage = null;
                     if (thumbSize.Width <= 16)
+                    {
+                        newSize = thumbSize;
                         tmpImage = System.Drawing.Icon.ExtractAssociatedIcon(fileInfo.FullName).ToBitmap();
-                    else if (newSize.Width < 240)
-                        tmpImage = img.GetThumbnailImage(newSize.Width, newSize.Height, null, IntPtr.Zero);
+                    }
                     else
-                        tmpImage = img;
+                    {
+                        if (thumbSize.Width < 240)
+                            tmpImage = img.GetThumbnailImage(thumbSize.Width, thumbSize.Height, null, IntPtr.Zero);
+                        else
+                            tmpImage = img;
+                        newSize = (img.Width > img.Height)
+                        ? new Size(thumbSize.Width,
+                            (int)((float)img.Height / ((float)img.Width / (float)thumbSize.Width)))
+                        : new Size((int)((float)img.Width / ((float)img.Height / (float)thumbSize.Height)),
+                            thumbSize.Height);
+                    }
                     Image thumbnailImage = null;
                     if (fitInside)
                         thumbnailImage = new Bitmap(thumbSize.Width, thumbSize.Height);
@@ -151,7 +157,7 @@ namespace ImageRenamer
                 this.ThumbImage = CreateThumbnailImage(this.FileInfo, new Size(thumbSize, thumbSize), true, out img);
                 this.currentThumbSize = thumbSize;
             }
-            if (metaDataRequired)
+            if (metaDataRequired && IMAGE_EXTS.Contains(FileInfo.Extension.ToUpper()))
             {
                 if (MetaData == null)
                 {
