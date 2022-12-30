@@ -1,7 +1,7 @@
 # ImageSorter
 Batch rename and fix file date and exif date of your images
 
-!(docs/general.png)
+!(docs/general.png?raw=true)
 
 # Features
 * Batch rename your files
@@ -24,11 +24,11 @@ Batch rename and fix file date and exif date of your images
 # Screenshots
 
 ## Features descriptions
-!(docs/tooltips.png)
+!(docs/tooltips.png?raw=true)
 
 ## File modifiers panel
 
-!(docs/file_panel_help.png)
+!(docs/file_panel_help.png?raw=true)
 
 ## File Date and Exif Date modifiers panel
-!(docs/date_panel_help.png)
+!(docs/date_panel_help.png?raw=true)
