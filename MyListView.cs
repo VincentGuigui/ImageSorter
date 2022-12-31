@@ -105,7 +105,7 @@ namespace ImageRenamer
 
         [DefaultValue(typeof(Size), "400, 400")]
         public Size PreviewThumbnailSize { get; set; }
-        BufferedGraphics bufferedGraphics;
+        //BufferedGraphics bufferedGraphics;
         [DefaultValue(true)]
         public bool AllowRowReorder { get; set; }
         public new SortOrder Sorting
@@ -143,7 +143,7 @@ namespace ImageRenamer
             //Activate double buffering
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
             this.DoubleBuffered = true;
-            bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), this.Bounds);
+            //bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), this.Bounds);
         }
 
         #region Code généré par le Concepteur Windows Form
@@ -850,6 +850,7 @@ namespace ImageRenamer
             if (listViewItem == null)
                 listViewItem = new ListViewItem(new String[] { null, null, null, null, null, null });
             Cursor.Current = Cursors.WaitCursor;
+            listViewItem.UseItemStyleForSubItems = false;
             imageInfo.LoadThumbnailAndMetadata(this.thumbSize, MetaDataRequired);
             thumbnailImageList.Images.Add(imageInfo.FileInfo.FullName, imageInfo.ThumbImage);
             listViewItem.ImageKey = imageInfo.FileInfo.FullName;
@@ -1244,7 +1245,7 @@ namespace ImageRenamer
                                 this.Items[index].Focused = true;
                             }
                         }
-                        bufferedGraphics.Graphics.Clear(BackColor);
+                        //bufferedGraphics.Graphics.Clear(BackColor);
                         this.EndUpdate();
                         if (this.Items.Count == 0)
                         {
@@ -1319,10 +1320,10 @@ namespace ImageRenamer
 
         protected override void OnSizeChanged(EventArgs e)
         {
-            if (bufferedGraphics != null)
-                bufferedGraphics.Dispose();
-            bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), new Rectangle(0, 0, this.Bounds.Width, this.Bounds.Height));
-            bufferedGraphics.Graphics.Clear(BackColor);
+            //if (bufferedGraphics != null)
+            //    bufferedGraphics.Dispose();
+            //bufferedGraphics = BufferedGraphicsManager.Current.Allocate(this.CreateGraphics(), new Rectangle(0, 0, this.Bounds.Width, this.Bounds.Height));
+            //bufferedGraphics.Graphics.Clear(BackColor);
             base.OnSizeChanged(e);
         }
 
