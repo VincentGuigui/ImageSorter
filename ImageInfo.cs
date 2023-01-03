@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
 
-namespace ImageRenamer
+namespace ImageSorter
 {
     /// <summary>
     /// Description résumée de ImageInfo.

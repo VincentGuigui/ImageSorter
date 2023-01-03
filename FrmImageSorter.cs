@@ -10,13 +10,14 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Threading;
+using System.Runtime.InteropServices;
 
-namespace ImageRenamer
+namespace ImageSorter
 {
     /// <summary>
     /// Description résumée de Form1.
     /// </summary>
-    public class FrmImageRenamer : System.Windows.Forms.Form
+    public class FrmImageSorter : System.Windows.Forms.Form
     {
         private enum ExtensionTransformation
         {
@@ -103,15 +104,82 @@ namespace ImageRenamer
         private CheckBox bLivePreview;
         private IContainer components;
 
-        public FrmImageRenamer()
+        // P/Invoke constants
+        private const int WM_SYSCOMMAND = 0x112;
+        private const int MF_STRING = 0x0;
+        private Label lblDateCounterStartDateError;
+        private Label lblDateCounterIncrementError;
+        private const int MF_SEPARATOR = 0x800;
+
+        // P/Invoke declarations
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool AppendMenu(IntPtr hMenu, int uFlags, int uIDNewItem, string lpNewItem);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool InsertMenu(IntPtr hMenu, int uPosition, int uFlags, int uIDNewItem, string lpNewItem);
+
+
+        // ID for the About item on the system menu
+        private int SYSMENU_ABOUT_ID = 0x1;
+
+        public FrmImageSorter()
         {
             //
             // Requis pour la prise en charge du Concepteur Windows Forms
             //
             InitializeComponent();
+            Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            this.Text += " " + version.Major + "." + version.Minor;
             cbChangeExtension.Items.Clear();
             cbChangeExtension.DataSource = System.Enum.GetValues(typeof(ExtensionTransformation));
-            btnThumbSizeOk_Click(null, null);
+            folderBrowserDialog.SelectedPath = txtFolder.Text;
+            txtDateCounterStartDate.Text = DateTime.Now.ToString();
+            toolTip.SetToolTip(txtDateCounterStartDate, "Format: " + DateTime.Now.ToString());
+            txtDateSetterStartDate.Text = DateTime.Now.ToString();
+            toolTip.SetToolTip(txtDateSetterStartDate, "Format: " + DateTime.Now.ToString());
+            txtFolder_TextChanged(null, null);
+            bLoadThumbnail_CheckedChanged(null, null);
+            bFilename_CheckedChanged(null, null);
+            bClearFilename_CheckedChanged(null, null);
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+
+            // Get a handle to a copy of this form's system (window) menu
+            IntPtr hSysMenu = GetSystemMenu(this.Handle, false);
+
+            // Add a separator
+            AppendMenu(hSysMenu, MF_SEPARATOR, 0, string.Empty);
+
+            // Add the About menu item
+            AppendMenu(hSysMenu, MF_STRING, SYSMENU_ABOUT_ID, "&About…");
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+
+            // Test if the About item was selected from the system menu
+            if ((m.Msg == WM_SYSCOMMAND) && ((int)m.WParam == SYSMENU_ABOUT_ID))
+            {
+                ShowAboutForm();
+            }
+        }
+
+        private void FrmImageSorter_HelpRequested(object sender, HelpEventArgs hlpevent)
+        {
+            ShowAboutForm();
+        }
+
+        private void ShowAboutForm()
+        {
+            FrmAbout about = new FrmAbout();
+            about.ShowDialog();
         }
 
         /// <summary>
@@ -137,7 +205,7 @@ namespace ImageRenamer
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmImageRenamer));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmImageSorter));
             this.txtFolder = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.btnBrowse = new System.Windows.Forms.Button();
@@ -153,6 +221,7 @@ namespace ImageRenamer
             this.bLivePreview = new System.Windows.Forms.CheckBox();
             this.bDateCounter = new System.Windows.Forms.CheckBox();
             this.gbDateCounter = new System.Windows.Forms.GroupBox();
+            this.lblDateCounterStartDateError = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.txtDateCounterIncrement = new System.Windows.Forms.TextBox();
             this.txtDateCounterStartDate = new System.Windows.Forms.TextBox();
@@ -211,7 +280,8 @@ namespace ImageRenamer
             this.previewThumbnail = new System.Windows.Forms.PictureBox();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.bMinimalView = new System.Windows.Forms.CheckBox();
-            this.listView = new ImageRenamer.MyListView();
+            this.listView = new ImageSorter.MyListView();
+            this.lblDateCounterIncrementError = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.tbThumbSize)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.iInsert)).BeginInit();
             this.gbBatchRename.SuspendLayout();
@@ -292,6 +362,7 @@ namespace ImageRenamer
             this.btnApplyChanges.Size = new System.Drawing.Size(100, 45);
             this.btnApplyChanges.TabIndex = 4;
             this.btnApplyChanges.Text = "Apply";
+            this.toolTip.SetToolTip(this.btnApplyChanges, "Definitively apply changes");
             this.btnApplyChanges.Click += new System.EventHandler(this.btnApplyChanges_Click);
             // 
             // bClearFilename
@@ -373,6 +444,7 @@ namespace ImageRenamer
             this.bLivePreview.Size = new System.Drawing.Size(115, 17);
             this.bLivePreview.TabIndex = 17;
             this.bLivePreview.Text = "Live Preview on all";
+            this.toolTip.SetToolTip(this.bLivePreview, "Preview new filenames for all files");
             this.bLivePreview.CheckedChanged += new System.EventHandler(this.bLivePreview_CheckedChanged);
             // 
             // bDateCounter
@@ -390,15 +462,32 @@ namespace ImageRenamer
             this.gbDateCounter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.gbDateCounter.BackColor = System.Drawing.Color.Transparent;
+            this.gbDateCounter.Controls.Add(this.lblDateCounterIncrementError);
+            this.gbDateCounter.Controls.Add(this.lblDateCounterStartDateError);
             this.gbDateCounter.Controls.Add(this.label10);
             this.gbDateCounter.Controls.Add(this.txtDateCounterIncrement);
             this.gbDateCounter.Controls.Add(this.txtDateCounterStartDate);
+            this.gbDateCounter.Enabled = false;
             this.gbDateCounter.Location = new System.Drawing.Point(3, 219);
             this.gbDateCounter.Name = "gbDateCounter";
             this.gbDateCounter.Size = new System.Drawing.Size(211, 73);
             this.gbDateCounter.TabIndex = 16;
             this.gbDateCounter.TabStop = false;
             this.gbDateCounter.Text = "Counter";
+            // 
+            // lblDateCounterStartDateError
+            // 
+            this.lblDateCounterStartDateError.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDateCounterStartDateError.BackColor = System.Drawing.Color.Transparent;
+            this.lblDateCounterStartDateError.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDateCounterStartDateError.ForeColor = System.Drawing.Color.Red;
+            this.lblDateCounterStartDateError.Location = new System.Drawing.Point(194, 20);
+            this.lblDateCounterStartDateError.Name = "lblDateCounterStartDateError";
+            this.lblDateCounterStartDateError.Size = new System.Drawing.Size(12, 24);
+            this.lblDateCounterStartDateError.TabIndex = 35;
+            this.lblDateCounterStartDateError.Text = "*";
+            this.lblDateCounterStartDateError.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblDateCounterStartDateError.Visible = false;
             // 
             // label10
             // 
@@ -420,6 +509,7 @@ namespace ImageRenamer
             this.txtDateCounterIncrement.TabIndex = 33;
             this.txtDateCounterIncrement.Text = "d or d.hh:mm[:ss]";
             this.toolTip.SetToolTip(this.txtDateCounterIncrement, "Format: d or d.hh:mm[:ss]");
+            this.txtDateCounterIncrement.TextChanged += new System.EventHandler(this.txtDateCounterIncrement_TextChanged);
             // 
             // txtDateCounterStartDate
             // 
@@ -429,6 +519,7 @@ namespace ImageRenamer
             this.txtDateCounterStartDate.Name = "txtDateCounterStartDate";
             this.txtDateCounterStartDate.Size = new System.Drawing.Size(203, 20);
             this.txtDateCounterStartDate.TabIndex = 17;
+            this.txtDateCounterStartDate.TextChanged += new System.EventHandler(this.txtDateCounterStartDate_TextChanged);
             // 
             // bCounter
             // 
@@ -490,6 +581,7 @@ namespace ImageRenamer
             0,
             0,
             0});
+            this.iStart.ValueChanged += new System.EventHandler(this.iStart_ValueChanged);
             // 
             // label2
             // 
@@ -520,6 +612,7 @@ namespace ImageRenamer
             0,
             0,
             0});
+            this.iStep.ValueChanged += new System.EventHandler(this.iStep_ValueChanged);
             // 
             // label1
             // 
@@ -548,6 +641,7 @@ namespace ImageRenamer
             0,
             0,
             0});
+            this.iDigits.ValueChanged += new System.EventHandler(this.iDigits_ValueChanged);
             // 
             // label4
             // 
@@ -570,6 +664,7 @@ namespace ImageRenamer
             this.btnPreviewOnSelection.Size = new System.Drawing.Size(207, 28);
             this.btnPreviewOnSelection.TabIndex = 14;
             this.btnPreviewOnSelection.Text = "Set filename for selection";
+            this.toolTip.SetToolTip(this.btnPreviewOnSelection, "Preview new filename");
             this.btnPreviewOnSelection.Click += new System.EventHandler(this.btnPreviewOnSelection_Click);
             // 
             // txtDateFormatForFilename
@@ -581,6 +676,7 @@ namespace ImageRenamer
             this.txtDateFormatForFilename.Size = new System.Drawing.Size(207, 20);
             this.txtDateFormatForFilename.TabIndex = 13;
             this.txtDateFormatForFilename.Text = "yyyyMMdd_HHmmss";
+            this.toolTip.SetToolTip(this.txtDateFormatForFilename, "Date format when inserting dates into filenames\r\nDefault value: yyyyMMdd_HHmmss");
             this.txtDateFormatForFilename.TextChanged += new System.EventHandler(this.txtDateFormatForFilename_TextChanged);
             // 
             // txtNewExtension
@@ -688,6 +784,7 @@ namespace ImageRenamer
             this.bLoadMetaData.Size = new System.Drawing.Size(102, 24);
             this.bLoadMetaData.TabIndex = 12;
             this.bLoadMetaData.Text = "Load Exif Date";
+            this.toolTip.SetToolTip(this.bLoadMetaData, "Load Exif Date for all files (slow process if large number of photos))");
             this.bLoadMetaData.CheckedChanged += new System.EventHandler(this.bLoadMetaData_CheckedChanged);
             // 
             // bLoadThumbnail
@@ -698,6 +795,7 @@ namespace ImageRenamer
             this.bLoadThumbnail.Size = new System.Drawing.Size(75, 17);
             this.bLoadThumbnail.TabIndex = 13;
             this.bLoadThumbnail.Text = "Thumbnail";
+            this.toolTip.SetToolTip(this.bLoadThumbnail, "Display photo thumbnail for all files (slow process if large number of photos))");
             this.bLoadThumbnail.CheckedChanged += new System.EventHandler(this.bLoadThumbnail_CheckedChanged);
             // 
             // gbThumbnail
@@ -718,6 +816,7 @@ namespace ImageRenamer
             this.btnReset.Size = new System.Drawing.Size(100, 45);
             this.btnReset.TabIndex = 4;
             this.btnReset.Text = "Reset";
+            this.toolTip.SetToolTip(this.btnReset, "Restore all names and dates to their original values");
             this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
             // 
             // btnLockGoodFilenames
@@ -1083,7 +1182,21 @@ namespace ImageRenamer
             this.listView.SelectedIndexChanged += new System.EventHandler(this.listView_SelectedIndexChanged);
             this.listView.DragDrop += new System.Windows.Forms.DragEventHandler(this.listView_DragDrop);
             // 
-            // FrmImageRenamer
+            // lblDateCounterIncrementError
+            // 
+            this.lblDateCounterIncrementError.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDateCounterIncrementError.BackColor = System.Drawing.Color.Transparent;
+            this.lblDateCounterIncrementError.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDateCounterIncrementError.ForeColor = System.Drawing.Color.Red;
+            this.lblDateCounterIncrementError.Location = new System.Drawing.Point(194, 42);
+            this.lblDateCounterIncrementError.Name = "lblDateCounterIncrementError";
+            this.lblDateCounterIncrementError.Size = new System.Drawing.Size(12, 24);
+            this.lblDateCounterIncrementError.TabIndex = 35;
+            this.lblDateCounterIncrementError.Text = "*";
+            this.lblDateCounterIncrementError.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblDateCounterIncrementError.Visible = false;
+            // 
+            // FrmImageSorter
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(1008, 631);
@@ -1098,14 +1211,15 @@ namespace ImageRenamer
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.btnBrowse);
             this.Controls.Add(this.listView);
-            this.Controls.Add(this.txtFolder);
             this.Controls.Add(this.bLoadMetaData);
+            this.Controls.Add(this.txtFolder);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(1024, 670);
-            this.Name = "FrmImageRenamer";
+            this.Name = "FrmImageSorter";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Image Sorter";
-            this.Load += new System.EventHandler(this.FrmImageRenamer_Load);
+            this.Load += new System.EventHandler(this.FrmImageSorter_Load);
+            this.HelpRequested += new System.Windows.Forms.HelpEventHandler(this.FrmImageSorter_HelpRequested);
             ((System.ComponentModel.ISupportInitialize)(this.tbThumbSize)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.iInsert)).EndInit();
             this.gbBatchRename.ResumeLayout(false);
@@ -1141,20 +1255,11 @@ namespace ImageRenamer
         [STAThread]
         static void Main()
         {
-            Application.Run(new FrmImageRenamer());
+            Application.Run(new FrmImageSorter());
         }
 
-        private void FrmImageRenamer_Load(object sender, System.EventArgs e)
+        private void FrmImageSorter_Load(object sender, System.EventArgs e)
         {
-            folderBrowserDialog.SelectedPath = txtFolder.Text;
-            txtDateCounterStartDate.Text = DateTime.Now.ToString();
-            toolTip.SetToolTip(txtDateCounterStartDate, "Format: " + DateTime.Now.ToString());
-            txtDateSetterStartDate.Text = DateTime.Now.ToString();
-            toolTip.SetToolTip(txtDateSetterStartDate, "Format: " + DateTime.Now.ToString());
-            txtFolder_TextChanged(null, null);
-            bLoadThumbnail_CheckedChanged(null, null);
-            bFilename_CheckedChanged(null, null);
-            bClearFilename_CheckedChanged(null, null);
         }
 
         private void btnBrowse_Click(object sender, System.EventArgs e)
@@ -1211,11 +1316,10 @@ namespace ImageRenamer
         }
 
         private void bLoadMetaData_CheckedChanged(object sender, System.EventArgs e)
-        {   
+        {
             listView.MetaDataRequired = bLoadMetaData.Checked;
             btnThumbSizeOk_Click(sender, e);
         }
-
 
         private void listView_DragDrop(object sender, System.Windows.Forms.DragEventArgs e)
         {
@@ -1233,7 +1337,6 @@ namespace ImageRenamer
             if (bCounter.Checked)
             {
                 this.gbCounter.Enabled = true;
-                this.gbCounter.Visible = true;
                 this.bDateCounter.Checked = false;
             }
             else
@@ -1247,7 +1350,6 @@ namespace ImageRenamer
             if (bDateCounter.Checked)
             {
                 this.gbDateCounter.Enabled = true;
-                this.gbDateCounter.Visible = true;
                 this.bCounter.Checked = false;
             }
             else
@@ -1336,8 +1438,40 @@ namespace ImageRenamer
             }
         }
 
+        private bool IsNewFilenamePatternValid()
+        {
+            return IsDateCounterStartDateValid() && IsDateCounterIncrementValid();
+        }
+
+        private bool IsDateCounterIncrementValid()
+        {
+            if (bDateCounter.Checked)
+            {
+                TimeSpan tsTest;
+                return TimeSpan.TryParse(txtDateCounterIncrement.Text, out tsTest);
+            }
+            return true;
+        }
+
+        private bool IsDateCounterStartDateValid()
+        {
+            if (bDateCounter.Checked)
+            {
+                DateTime dtTest;
+                return DateTime.TryParse(txtDateCounterStartDate.Text, out dtTest);
+            }
+            return true;
+        }
+
+        private void txtDateCounterStartDate_TextChanged(object sender, EventArgs e)
+        {
+            lblDateCounterStartDateError.Visible = !IsDateCounterStartDateValid();
+            bLivePreview_CheckedChanged(sender, e);
+        }
+
         private void btnPreviewOnSelection_Click(object sender, EventArgs e)
         {
+            if (!IsNewFilenamePatternValid()) return;
             int relativeBatchIndex = 0;
             List<string> excludedFilenames = listView.GetEstimatedFilenames();
             DialogResult OKOrIgnoreForAll = DialogResult.None;
@@ -1366,6 +1500,7 @@ namespace ImageRenamer
         {
             if (txtDateFormatForFilename.Text == "")
                 txtDateFormatForFilename.Text = DATE_FILENAMEFORMAT;
+            bLivePreview_CheckedChanged(sender, e);
         }
 
         private DialogResult GenerateNewFilename(ListViewItem listViewItem, List<string> excludedFilenames, int relativeBatchIndex = 0, DialogResult OKOrIgnoreForAll = DialogResult.None)
@@ -1800,6 +1935,12 @@ namespace ImageRenamer
         private void bMinimalView_CheckedChanged(object sender, EventArgs e)
         {
             listView.MinimalistView = bMinimalView.Checked;
+        }
+
+        private void txtDateCounterIncrement_TextChanged(object sender, EventArgs e)
+        {
+            lblDateCounterIncrementError.Visible = !IsDateCounterIncrementValid();
+            bLivePreview_CheckedChanged(sender, e);
         }
 
     }

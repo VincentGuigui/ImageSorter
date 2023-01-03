@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,38 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="folderBrowserDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
-  <metadata name="toolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>180, 17</value>
-  </metadata>
-  <data name="lblHelp.Text" xml:space="preserve">
-    <value>• Drag and Drop to add files or reorder
-• Delete to remove the selected files from the list (no actual deletion)
-• Backspace to reset name &amp; dates
-• L to lock / unlock file and prevent batch changes
-• Double-click to manually set a value (which will be locked to prevent overwrite by batch)</value>
-  </data>
-  <metadata name="toolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>180, 17</value>
-  </metadata>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        AAABAAEAICAQAAAAAADoAgAAFgAAACgAAAAgAAAAQAAAAAEABAAAAAAAAAIAAAAAAAAAAAAAEAAAABAA
-        AAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAgICAAMDAwAAAAP8AAP8AAAD//wD/AAAA/wD/AP//
-        AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHd3d3d3
-        d3d3d3d3d3d3cARERERERERERERERERERHAE//////////////////RwBPAA8ADw8PDw/w/////0cATw
-        8PD/8A/wAPDw////9HAE8P/w//Dw8PDw8P////RwBPAA8ADwD/8P/w/////0cAT/////////////////
-        9HAE//////////////////RwBP/////////////////0cAT/////////Dw8A/wAP9HAE/////////w8P
-        Dw/w//RwBP////////8ADwD//w/0cAT/////////Dw8PDw8P9HAE8AAAAAAA//D/AP/w//RwBPAiIiIi
-        IP/////////0cATwIiIiIiD/Dw8A//D/9HAE8O7u4zIg/w8PDw/w//RwBPDrvuM+4P8ADwD/8P/0cATw
-        677jPuD/Dw8PDwD/9HAE8O6+7u7g//D/AP/w//RwBPAAAAAAAP/////////0cASIiIiIiIiIiIiIiIiI
-        hHAERERERERERERERERERERwBExMTExMTExMTE7Ozkl0cATMzMzMzMzMzMzMzMzMxAAARERERERERERE
-        REREREAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////AAAABgAAAAYAA
-        AAGAAAABgAAAAYAAAAGAAAABgAAAAYAAAAGAAAABgAAAAYAAAAGAAAABgAAAAYAAAAGAAAABgAAAAYAA
-        AAGAAAABgAAAAYAAAAGAAAABgAAAAYAAAAGAAAABgAAAA8AAAAf//////////w==
-</value>
-  </data>
 </root>

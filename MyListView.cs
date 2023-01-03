@@ -11,7 +11,7 @@ using System.Threading;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-namespace ImageRenamer
+namespace ImageSorter
 {
     /// <summary>
     /// Description résumée de MyListView.

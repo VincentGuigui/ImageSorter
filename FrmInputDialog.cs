@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Globalization;
 
-namespace ImageRenamer
+namespace ImageSorter
 {
     /// <summary>
     /// Description résumée de FrmInputDialog.
@@ -261,6 +261,7 @@ namespace ImageRenamer
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(400, 180);
             this.Name = "FrmInputDialog";
+            this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Name of the file";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FrmInputDialog_FormClosing);

@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace ImageRenamer
+namespace ImageSorter
 {
 	/// <summary>
 	/// Exif Reader.

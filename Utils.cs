@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace ImageRenamer
+namespace ImageSorter
 {
     /// <summary>
     /// Description résumée de Utils.
