@@ -32,8 +32,8 @@ namespace ImageSorter
             this.lblAppname = new System.Windows.Forms.Label();
             this.lblVersion = new System.Windows.Forms.Label();
             this.lblWebsite = new System.Windows.Forms.LinkLabel();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.imgHelp = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.imgHelp)).BeginInit();
             this.SuspendLayout();
             // 
             // lblAppname
@@ -69,23 +69,23 @@ namespace ImageSorter
             this.lblWebsite.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lblWebsite.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lblWebsite_LinkClicked);
             // 
-            // pictureBox1
+            // imgHelp
             // 
-            this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pictureBox1.Image = global::ImageSorter.Properties.Resources.tooltips;
-            this.pictureBox1.Location = new System.Drawing.Point(0, 100);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(784, 517);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox1.TabIndex = 3;
-            this.pictureBox1.TabStop = false;
+            this.imgHelp.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.imgHelp.Image = global::ImageSorter.Properties.Resources.tooltips_embedded;
+            this.imgHelp.Location = new System.Drawing.Point(0, 100);
+            this.imgHelp.Name = "imgHelp";
+            this.imgHelp.Size = new System.Drawing.Size(784, 517);
+            this.imgHelp.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.imgHelp.TabIndex = 3;
+            this.imgHelp.TabStop = false;
             // 
             // FrmAbout
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 617);
-            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.imgHelp);
             this.Controls.Add(this.lblWebsite);
             this.Controls.Add(this.lblVersion);
             this.Controls.Add(this.lblAppname);
@@ -97,7 +97,7 @@ namespace ImageSorter
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "About";
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.imgHelp)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -107,6 +107,6 @@ namespace ImageSorter
         private System.Windows.Forms.Label lblAppname;
         private System.Windows.Forms.Label lblVersion;
         private System.Windows.Forms.LinkLabel lblWebsite;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox imgHelp;
     }
 }

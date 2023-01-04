@@ -83,9 +83,9 @@ namespace ImageSorter.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap tooltips {
+        internal static System.Drawing.Bitmap tooltips_embedded {
             get {
-                object obj = ResourceManager.GetObject("tooltips", resourceCulture);
+                object obj = ResourceManager.GetObject("tooltips_embedded", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

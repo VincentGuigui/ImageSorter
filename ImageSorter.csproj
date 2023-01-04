@@ -143,7 +143,7 @@
     <Compile Include="Utils.cs">
       <SubType>Code</SubType>
     </Compile>
-    <EmbeddedResource Include="docs\tooltips.png" />
+    <None Include="docs\tooltips_embedded.png" />
     <None Include="Resources\Back.png" />
     <None Include="Resources\AutoFix.png" />
     <EmbeddedResource Include="FrmAbout.resx">
@@ -163,6 +163,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +178,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
